@@ -1,31 +1,49 @@
 <script>
-	import Counter from "./Counter.svelte";
-	import welcome from "$lib/images/svelte-welcome.webp";
-	import welcome_fallback from "$lib/images/svelte-welcome.png";
+	import Colonies from "./Colonies.svelte";
+	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
+	import { readSaveFile, character } from "$lib/saveReader.js"
+
+	/**
+	 * @type FileList
+	 */
+	let saveFile
+	let saveFilePromise
+
+	function search() {
+		console.log($colonyFilterStore)
+	}
+
+	$: if (saveFile) {
+		saveFilePromise = readSaveFile(saveFile.item(0))
+	}
 </script>
 
 <svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
+	<title>ColonyFinder</title>
+	<meta name="description" content="Find the perfect Starsector colony"/>
 </svelte:head>
 
 <section>
 	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcome_fallback} alt="Welcome" />
-			</picture>
-		</span>
-
-		to your new<br />SvelteKit app
+		ColonyFinder
 	</h1>
 
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
+	<label for="save">Select your save:</label>
+	<input bind:files={saveFile} id="save" type=file />
+	{#await saveFilePromise}
+		<p>Parsing save file...</p>
+	{:then _res}
+		{#if character}
+			<p>Hello, {character.honorific} {character.name}!</p>
+		{/if}
+	{:catch error}
+		<p style="color: red">{error.message}</p>
+	{/await}
 
-	<Counter />
+	<form on:submit|preventDefault={search}>
+		<Colonies/>
+		<button type="submit">Search</button>
+	</form>
 </section>
 
 <style>
@@ -39,21 +57,5 @@
 
 	h1 {
 		width: 100%;
-	}
-
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
-
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
 	}
 </style>

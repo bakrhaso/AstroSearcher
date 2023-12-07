@@ -7,6 +7,16 @@ module.exports = {
 		ecmaVersion: 2020,
 		extraFileExtensions: [".svelte"],
 	},
+	rules: {
+		"no-unused-vars": [
+			"warn",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^_",
+				"caughtErrorsIgnorePattern": "^_",
+			},
+		],
+	},
 	env: {
 		browser: true,
 		es2017: true,
