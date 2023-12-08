@@ -2,6 +2,8 @@
 
 planet_gen_data.csv can be found in data/campaign/procgen for vanilla and mods.
 
+Example campaign.xml can be found in devData, this save file also has several mods in it including Nexerelin, Industrial.Evolution, and DIY Planets.
+
 # create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
