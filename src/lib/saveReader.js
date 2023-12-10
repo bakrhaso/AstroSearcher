@@ -24,7 +24,7 @@ export async function readSaveFile(saveFile) {
 	 */
 	const save = parser.parse(await saveFile.text())
 
-	markets = findMarkets(save.CampaignEngine.hyperspace.o.saved.LocationToken)
+	markets = findMarkets(save.CampaignEngine.hyperspace)
 	console.log({ markets: Object.entries(markets) })
 	systems = findSystems(save.CampaignEngine.hyperspace)
 	console.log({ systems: Object.entries(systems) })
@@ -42,15 +42,18 @@ function findBodies(rootObject) {
 
 		const systemId = object.cL?.__attr?.z ?? object.cL?.__attr?.ref
 		const system = systems[systemId]
+		const hasSystem = system != null
 
-		if (system == null) return false
+		const marketId = object.market?.__attr?.z ?? object.market?.__attr?.ref
+		const market = markets[marketId]
+		const controlledByPlayerOrNoOne = market?.factionId == null || market.factionId === "player"
 
-		object.system = system
+		const isStar = object.tags?.st?.includes("star")
 
-		return (isNebulaWithStar || isPlanet)
+		return (isNebulaWithStar || isPlanet) && hasSystem && controlledByPlayerOrNoOne && !isStar
 	}
 
-	return findNodes(rootObject, bodyMatcher)
+	return findNodesRecursive(rootObject, bodyMatcher)
 }
 
 function findSystems(rootObject) {
@@ -60,7 +63,7 @@ function findSystems(rootObject) {
 		return isSystem
 	}
 
-	return findNodes(rootObject, systemMatcher)
+	return findNodesRecursive(rootObject, systemMatcher)
 }
 
 function findMarkets(rootObject) {
@@ -74,7 +77,7 @@ function findMarkets(rootObject) {
 		return isMarket && isNotPcmo && hasNoEconGroup && notPlayerFaction && sizeGreaterThanZero
 	}
 
-	return findNodes(rootObject, marketMatcher)
+	return findNodesRecursive(rootObject, marketMatcher)
 }
 
 /**
@@ -97,7 +100,7 @@ function findMarkets(rootObject) {
  * would be property name the array is under.
  * @return {any}
  */
-function findNodes(object, matchFun, collector = {}, arrayNodeName = null) {
+function findNodesRecursive(object, matchFun, collector = {}, arrayNodeName = null) {
 	const keys = Object.keys(object)
 
 	for (const key of keys) {
@@ -110,7 +113,48 @@ function findNodes(object, matchFun, collector = {}, arrayNodeName = null) {
 		const keyToPass = Array.isArray(object[key]) ? key : null
 
 		if (typeof object[key] === "object") {
-			findNodes(object[key], matchFun, collector, keyToPass)
+			findNodesRecursive(object[key], matchFun, collector, keyToPass)
+		}
+	}
+
+	return collector
+}
+
+/**
+ * Iteratively finds objects inside the root object that matches the matcher function.
+ *
+ * The matching objects are put in an object where the key is the value of the z-attribute
+ *
+ * @param object
+ * @param {findNodesMatchFun} matchFun
+ * @param collector You probably don't want to pass your own value in here
+ * @param arrayNodeName If the root object is an array, then the keys sent to matchFun would normally be
+ * numbers (the indexes in the array), this property lets us pass in the name of the node instead which
+ * would be property name the array is under.
+ * @return {any}
+ */
+function findNodesIterative(object, matchFun, collector = {}, arrayNodeName = null) {
+	/**
+	 * @type {{arrayNodeName: string | null, object}[]}
+	 */
+	const stack = [{ object, arrayNodeName }]
+
+	while (stack.length > 0) {
+		const curItem = stack.pop()
+		const curObj = curItem.object
+		const keys = Object.keys(curObj)
+		for (const key of keys) {
+			const z = curObj[key].__attr?.z
+
+			if (z != null && matchFun(curItem.arrayNodeName ?? key, curObj[key])) {
+				collector[z] = curObj[key]
+			}
+
+			const keyToPass = Array.isArray(curObj[key]) ? key : null
+
+			if (typeof curObj[key] === "object") {
+				stack.push({ object: curObj[key], arrayNodeName: keyToPass })
+			}
 		}
 	}
 

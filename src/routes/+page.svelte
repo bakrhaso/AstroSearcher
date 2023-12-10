@@ -36,8 +36,6 @@
 		{#if character}
 			<p>Hello, {character.honorific} {character.name}!</p>
 		{/if}
-	{:catch error}
-		<p style="color: red">{error.message}</p>
 	{/await}
 
 	<form on:submit|preventDefault={search}>
