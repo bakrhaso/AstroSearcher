@@ -4,6 +4,9 @@ import { XMLParser } from "fast-xml-parser"
  * @type {CharData}
  */
 export let character
+export let markets
+export let systems
+export let bodies
 
 /**
  * @param {File} saveFile
@@ -21,17 +24,36 @@ export async function readSaveFile(saveFile) {
 	 */
 	const save = parser.parse(await saveFile.text())
 
-	const markets = findMarkets(save.CampaignEngine.hyperspace.o.saved.LocationToken)
-	const systems = findSystems(save)
+	markets = findMarkets(save.CampaignEngine.hyperspace.o.saved.LocationToken)
 	console.log({ markets: Object.entries(markets) })
+	systems = findSystems(save.CampaignEngine.hyperspace)
 	console.log({ systems: Object.entries(systems) })
+	bodies = findBodies(save.CampaignEngine.hyperspace)
+	console.log({ bodies: Object.entries(bodies) })
 
 	console.log(save)
 	character = save.CampaignEngine.characterData
 }
 
+function findBodies(rootObject) {
+	const bodyMatcher = (key, object) => {
+		const isPlanet = key === "Plnt" || object.__attr?.cl === "Plnt"
+		const isNebulaWithStar = object.__attr?.ty === "NEBULA" && object.star != null
+
+		const systemId = object.cL?.__attr?.z ?? object.cL?.__attr?.ref
+		const system = systems[systemId]
+
+		if (system == null) return false
+
+		object.system = system
+
+		return (isNebulaWithStar || isPlanet)
+	}
+
+	return findNodes(rootObject, bodyMatcher)
+}
+
 function findSystems(rootObject) {
-	//:is(Sstm, [cl="Sstm"])[z]
 	const systemMatcher = (key, object) => {
 		const isSystem = key === "Sstm" || object.__attr?.cl === "Sstm"
 
