@@ -1,162 +1,357 @@
-import { XMLParser } from "fast-xml-parser"
-
 /**
  * @type {CharData}
  */
 export let character
-export let markets
+
+export let coords
 export let systems
 export let bodies
+export let bodyCoords
+export let markets
+export let mcons
+export let relations
+export let factionWeights
+export let comkts
+
+let xml
 
 /**
  * @param {File} saveFile
  */
 export async function readSaveFile(saveFile) {
-	const parserOptions = {
-		ignoreAttributes: false,
-		attributesGroupName: "__attr",
-		attributeNamePrefix: "",
-	}
-	const parser = new XMLParser(parserOptions)
+	const saveFileText = await saveFile.text()
 
-	/**
-	 * @type {{ CampaignEngine: CampaignEngine }}
-	 */
-	const save = parser.parse(await saveFile.text())
+	const parser = new DOMParser()
+	xml = parser.parseFromString(saveFileText, "text/xml")
 
-	markets = findMarkets(save.CampaignEngine.hyperspace)
-	console.log({ markets: Object.entries(markets) })
-	systems = findSystems(save.CampaignEngine.hyperspace)
-	console.log({ systems: Object.entries(systems) })
-	bodies = findBodies(save.CampaignEngine.hyperspace)
-	console.log({ bodies: Object.entries(bodies) })
+	coords = {}
+	systems = {}
+	bodies = {}
+	bodyCoords = {}
+	markets = {}
+	mcons = {}
+	relations = {}
+	factionWeights = {}
+	comkts = {}
 
-	console.log(save)
-	character = save.CampaignEngine.characterData
+	getCoords()
+	getRelations()
+	getMarkets()
+	getMCons()
+	getCOMkts()
+	getSystems()
+	getBodyCoords()
+	getBodies()
 }
 
-function findBodies(rootObject) {
-	const bodyMatcher = (key, object) => {
-		const isPlanet = key === "Plnt" || object.__attr?.cl === "Plnt"
-		const isNebulaWithStar = object.__attr?.ty === "NEBULA" && object.star != null
+function getCoords() {
+	const nodes = xml.querySelectorAll(":is(l, lIH)[z]")
 
-		const systemId = object.cL?.__attr?.z ?? object.cL?.__attr?.ref
-		const system = systems[systemId]
-		const hasSystem = system != null
-
-		const marketId = object.market?.__attr?.z ?? object.market?.__attr?.ref
-		const market = markets[marketId]
-		const controlledByPlayerOrNoOne = market?.factionId == null || market.factionId === "player"
-
-		const isStar = object.tags?.st?.includes("star")
-
-		return (isNebulaWithStar || isPlanet) && hasSystem && controlledByPlayerOrNoOne && !isStar
+	for (const coord of nodes) {
+		coords[z(coord)] = coord
 	}
-
-	return findNodesRecursive(rootObject, bodyMatcher)
 }
 
-function findSystems(rootObject) {
-	const systemMatcher = (key, object) => {
-		const isSystem = key === "Sstm" || object.__attr?.cl === "Sstm"
+function getRelations() {
+	const nodes = xml.querySelectorAll("factionIdOne")
 
-		return isSystem
+	for (const factionA of nodes) {
+		const relation = factionA.parentNode
+		const value = Number(relation.getElementsByTagName("value")[0].textContent)
+
+		const factionAId = factionA.textContent
+		const factionBId = relation.getElementsByTagName("factionIdTwo")[0].textContent
+
+		if (relations[factionAId] == null) {
+			relations[factionAId] = {}
+		}
+		relations[factionAId][factionBId] = value
+
+		if (relations[factionBId] == null) {
+			relations[factionBId] = {}
+		}
+		relations[factionBId][factionAId] = value
 	}
-
-	return findNodesRecursive(rootObject, systemMatcher)
 }
 
-function findMarkets(rootObject) {
-	const marketMatcher = (key, object) => {
-		const isMarket = key === "market" || key === "Market" || object.__attr?.cl === "Market" || object.__attr?.cl === "PCMarket"
-		const isNotPcmo = object.isPlanetConditionMarketOnly === false
-		const hasNoEconGroup = object.econGroup == null
-		const notPlayerFaction = object.factionId !== "player"
-		const sizeGreaterThanZero = object.size > 0
+function getMarkets() {
+	const nodes = xml.querySelectorAll(':is(market, Market, [cl="Market"], [cl="PCMarket"])[z]')
 
-		return isMarket && isNotPcmo && hasNoEconGroup && notPlayerFaction && sizeGreaterThanZero
-	}
+	for (const marketNode of nodes) {
+		const pcmoTag = getNamedChild(marketNode, "isPlanetConditionMarketOnly")
+		const econGroup = getNamedChild(marketNode, "econGroup")
+		const realMarket = pcmoTag && pcmoTag.textContent === "false" && !econGroup
 
-	return findNodesRecursive(rootObject, marketMatcher)
-}
-
-/**
- * @callback findNodesMatchFun
- * @param {string} key
- * @param {object} object
- * @return boolean
- */
-
-/**
- * Recursively finds objects inside the root object that matches the matcher function.
- *
- * The matching objects are put in an object where the key is the value of the z-attribute
- *
- * @param object
- * @param {findNodesMatchFun} matchFun
- * @param collector You probably don't want to pass your own value in here
- * @param arrayNodeName If the root object is an array, then the keys sent to matchFun would normally be
- * numbers (the indexes in the array), this property lets us pass in the name of the node instead which
- * would be property name the array is under.
- * @return {any}
- */
-function findNodesRecursive(object, matchFun, collector = {}, arrayNodeName = null) {
-	const keys = Object.keys(object)
-
-	for (const key of keys) {
-		const z = object[key].__attr?.z
-
-		if (z != null && matchFun(arrayNodeName ?? key, object[key])) {
-			collector[z] = object[key]
+		if (!realMarket) {
+			continue
 		}
 
-		const keyToPass = Array.isArray(object[key]) ? key : null
+		const size = Number(getNamedChild(marketNode, "size").textContent)
+		const faction = getNamedChild(marketNode, "factionId")?.textContent
 
-		if (typeof object[key] === "object") {
-			findNodesRecursive(object[key], matchFun, collector, keyToPass)
+		if (faction === "player" || size <= 0) {
+			continue
+		}
+
+		const hidden = getNamedChild(marketNode, "hidden")
+
+		// TODO: Remove && !hidden from this line?
+		if (!hidden) {
+			// Source for -2 is https://fractalsoftworks.com/forum/index.php?topic=13672.msg230236#msg230236
+			factionWeights[faction] = (factionWeights[faction] ?? 0) + Math.max(1, size - 2)
+		}
+
+		const loc = getNamedChild(marketNode, "location")
+			.textContent.split("|")
+			.map(part => Number(part))
+		const marketId = z(marketNode)
+
+		markets[marketId] = {
+			location: { x: loc[0], y: loc[1] },
+			size,
+			faction,
 		}
 	}
-
-	return collector
 }
 
-/**
- * Iteratively finds objects inside the root object that matches the matcher function.
- *
- * The matching objects are put in an object where the key is the value of the z-attribute
- *
- * @param object
- * @param {findNodesMatchFun} matchFun
- * @param collector You probably don't want to pass your own value in here
- * @param arrayNodeName If the root object is an array, then the keys sent to matchFun would normally be
- * numbers (the indexes in the array), this property lets us pass in the name of the node instead which
- * would be property name the array is under.
- * @return {any}
- */
-function findNodesIterative(object, matchFun, collector = {}, arrayNodeName = null) {
-	/**
-	 * @type {{arrayNodeName: string | null, object}[]}
-	 */
-	const stack = [{ object, arrayNodeName }]
+function getMCons() {
+	const nodes = xml.querySelectorAll(':is(MCon, [cl="MCon"])[z]')
 
-	while (stack.length > 0) {
-		const curItem = stack.pop()
-		const curObj = curItem.object
-		const keys = Object.keys(curObj)
-		for (const key of keys) {
-			const z = curObj[key].__attr?.z
+	for (const mcon of nodes) {
+		mcons[z(mcon)] = mcon
+	}
+}
 
-			if (z != null && matchFun(curItem.arrayNodeName ?? key, curObj[key])) {
-				collector[z] = curObj[key]
+function getCOMkts() {
+	const nodes = xml.querySelectorAll("COMkt[z]")
+
+	for (const comkt of nodes) {
+		const market = comkt.parentElement.parentElement
+		const participates = !getNamedChild(market, "econGroup")
+
+		if (!participates) {
+			continue
+		}
+
+		let accessMods = 0
+
+		const fBs = market.querySelectorAll(':scope > accessibilityMod > fBs:not([s="core_base"],[s="core_hostile"])')
+		for (const fB of fBs) {
+			accessMods += Number(fB.getAttribute("v"))
+		}
+
+		comkts.push({
+			marketId: z(market),
+			faction: getNamedChild(market, "factionId").textContent,
+			commodity: comkt.getAttribute("c"),
+			supply: Number(comkt.getAttribute("mS")),
+			demand: Number(comkt.getAttribute("mD")),
+			accessMods: Math.round(100 * accessMods) / 100,
+		})
+	}
+}
+
+function getSystems() {
+	const nodes = xml.querySelectorAll(':is(Sstm, [cl="Sstm"])[z]')
+
+	for (const systemNode of nodes) {
+		if (systemNode != null && !(typeof getCoord(systemNode) === "undefined")) {
+			const name = systemNode.getAttribute("bN")
+			const coord = getCoord(systemNode).textContent.split("|")
+			const tagsElement = getNamedChild(systemNode, "tags")
+			const tags = []
+
+			// TODO in the original this code didn't work, the if checked if `children` was null instead of `tagsElement.children`
+			if (tagsElement?.children != null) {
+				for (const st of tagsElement.children) {
+					tags.push(st.textContent)
+				}
 			}
 
-			const keyToPass = Array.isArray(curObj[key]) ? key : null
+			const system = {
+				name,
+				x: Number(coord[0]),
+				y: Number(coord[1]),
+				tags,
+			}
 
-			if (typeof curObj[key] === "object") {
-				stack.push({ object: curObj[key], arrayNodeName: keyToPass })
+			if (tags.includes("has_coronal_tap")) {
+				const ccent = derefNode(systemNode.getElementsByTagName("tap")[0])
+				const discovered = ccent.getAttribute("di") !== "true"
+				system.coronalTap = true
+				system.coronalTapDiscovered = discovered
+			}
+
+			if (tags.includes("theme_derelict_cryosleeper")) {
+				const ccent = systemNode.querySelector('[cl="CryosleeperEntityPlugin"]').parentElement
+				const discovered = ccent.getAttribute("di") !== "true"
+				system.cryosleeper = true
+				system.cryosleeperDiscovered = discovered
+			}
+
+			// TODO the todo below was here in the original, not sure what it means
+			// TODO: if (system_node.querySelector('CampaignTerrain[type="pulsar_beam"])) {}
+			systems[z(systemNode)] = system
+		}
+	}
+}
+
+function getBodyCoords() {
+	const nodes = xml.querySelectorAll('d[cl="Plnt"]')
+
+	for (const dNodes of nodes) {
+		const bodyId = ref(dNodes)
+		const locNode = getNamedChild(dNodes.parentElement.parentElement.parentElement, "loc")
+		const coords = locNode.textContent.split("|")
+		bodyCoords[bodyId] = { x: Number(coords[0]), y: Number(coords[1]) }
+	}
+}
+
+function getBodies() {
+	const nodes = xml.querySelectorAll(':is(Plnt, [cl="Plnt"], [ty="NEBULA"] > star)[z]')
+
+	for (const body of nodes) {
+		const system = getSystem(body)
+		if (system == null) {
+			continue
+		}
+
+		const market = derefNode(getNamedChild(body, "market"))
+		const memory = getNamedChild(market, "memory")
+
+		let ruinExplored = "none"
+		let coreTechMiningMult = -1
+
+		if (memory != null) {
+			for (const mem of memory.children) {
+				for (const mem1 of mem.children) {
+					if (mem1?.children[0] == null) {
+						continue
+					}
+
+					if (mem1.children[0].textContent === "$ruinsExplored") {
+						ruinExplored = mem1.children[1].textContent
+					} else if (mem1.children[0].textContent === "$core_techMiningMult") {
+						coreTechMiningMult = mem1.children[1].textContent
+					}
+				}
+			}
+		}
+
+		const tagsElement = getNamedChild(body, "tags")
+		const tags = []
+
+		for (const st of tagsElement.children) {
+			tags.push(st.textContent)
+		}
+
+		const name = JSON.parse(getNamedChild(body, "j0").textContent)["f0"]
+		const type = getNamedChild(body, "type").textContent
+		const surveyLevel = getNamedChild(market, "surveyLevel")?.textContent
+		const conditions = getConditions(market)
+		const faction = getNamedChild(market, "factionId")?.textContent
+
+		if (faction != null || faction !== "player") {
+			continue
+		}
+
+		const bodyObj = new Body(
+			system,
+			name,
+			type,
+			surveyLevel,
+			conditions,
+			tags,
+			ruinExplored,
+			coreTechMiningMult,
+		)
+
+		const bodyId = z(body)
+		const radius = Number(getNamedChild(body, "radius").textContent)
+
+		if (!tags.includes("star") && !system.tags.includes("theme_core_populated")) {
+			bodies[bodyId] = bodyObj
+			system.bodies.push(bodyObj)
+		} else if (tags.includes("star")) {
+			bodyObj.radius = radius
+
+			if (!type.startsWith("nebula_") && bodyCoords[bodyId] != null) {
+				bodyObj.x = bodyCoords[bodyId].x
+				bodyObj.y = bodyCoords[bodyId].y
+			} else {
+				bodyObj.x = system.x
+				bodyObj.y = system.y
+			}
+
+			system.stars.push(bodyObj)
+		}
+	}
+}
+
+function getNamedChild(node, tagName) {
+	if (node instanceof Element) {
+		for (const child of node.children) {
+			if (child.tagName === tagName) {
+				return child
+			}
+		}
+	}
+}
+
+function getCoord(system) {
+	const coord = getNamedChild(system, "l")
+	if (coord && coord.hasAttribute("ref")) {
+		return coords[ref(coord)]
+	}
+	return coord
+}
+
+function derefNode(node) {
+	if (!node || node.hasAttribute("z")) {
+		return node
+	} else if (node.hasAttribute("ref")) {
+		return xml.querySelector('[z="' + ref(node) + '"]')
+	}
+}
+
+function getSystem(body) {
+	const system = getNamedChild(body, "cL")
+	if (system) {
+		const id = z(system) ?? ref(system)
+		return systems[id]
+	}
+}
+
+function getConditions(market) {
+	if (market == null) {
+		return
+	}
+
+	const conditions = []
+	const condTag = getNamedChild(market, "cond")
+	const conditionsTag = getNamedChild(market, "conditions")
+
+	if (condTag) {
+		for (const stTag of condTag.children) {
+			conditions.push(stTag.textContent)
+		}
+	} else if (conditionsTag) {
+		for (const mcon of conditionsTag.children) {
+			if (mcon.hasAttribute("ref")) {
+				conditions.push(mcons[ref(mcon)].getAttribute("i"))
+			} else {
+				conditions.push(mcon.getAttribute("i"))
 			}
 		}
 	}
 
-	return collector
+	return conditions
+}
+
+function z(node) {
+	return node.getAttribute("z")
+}
+
+function ref(node) {
+	return node.getAttribute("ref")
 }
