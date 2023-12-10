@@ -11,7 +11,7 @@ export let character
 export async function readSaveFile(saveFile) {
 	const parserOptions = {
 		ignoreAttributes: false,
-		attributesGroupName: "attr__",
+		attributesGroupName: "__attr",
 		attributeNamePrefix: "",
 	}
 	const parser = new XMLParser(parserOptions)
@@ -21,77 +21,52 @@ export async function readSaveFile(saveFile) {
 	 */
 	const save = parser.parse(await saveFile.text())
 
-	// used to recursively find where a object might be within the save file, only used in developing/debugging
-	// findVal(save.CampaignEngine, 'market')
-
-	const markets = getMarkets(save.CampaignEngine.hyperspace.o.saved.LocationToken)
-	console.log([... new Set(markets.flatMap(it => it.cond.st).sort())])
-
+	const markets = findMarkets(save.CampaignEngine.hyperspace.o.saved.LocationToken)
+	console.log(markets)
 
 	console.log(save)
 	character = save.CampaignEngine.characterData
 }
 
-/**
- * @param {LocationToken[]} locationTokens
- * @return Market[]
- */
-function getMarkets(locationTokens) {
-	return locationTokens.flatMap((lt) => {
-		/**
-		 * @type {Market[]}
-		 */
-		const markets = []
+function findMarkets(saveObj) {
+	const marketMatcher = (key, object) => {
+		const isMarket = key === "market" || key === "Market" || object.__attr?.cl === "Market" || object.__attr?.cl === "PCMarket"
+		const hasZ = object.__attr?.z != null
+		const isNotPcmo = object.isPlanetConditionMarketOnly === false
+		const hasNoEconGroup = object.econGroup == null
+		const notPlayerFaction = object.factionId !== "player"
+		const sizeGreaterThanZero = object.size > 0
 
-		if (lt.orbit?.s?.o?.saved?.Plnt != null) {
-			if (Array.isArray(lt.orbit.s.o.saved.Plnt)) {
-				for (const p of lt.orbit.s.o.saved.Plnt) {
-					if (p.market != null) {
-						markets.push(p.market)
-					}
-				}
-			} else if (lt.orbit.s.o.saved.Plnt.market != null) {
-				markets.push(lt.orbit.s.o.saved.Plnt.market)
-			}
-		}
+		return isMarket && hasZ && isNotPcmo && hasNoEconGroup && notPlayerFaction && sizeGreaterThanZero
+	}
 
-		if (lt.orbit?.s?.con?.systems?.Sstm != null && Array.isArray(lt.orbit.s.con.systems.Sstm)) {
-			for (const sstm of lt.orbit.s.con.systems.Sstm) {
-				if (sstm.o?.saved?.Plnt != null) {
-					if (Array.isArray(sstm.o.saved.Plnt)) {
-						for (const p of sstm.o.saved.Plnt) {
-							if (p.market != null) {
-								markets.push(p.market)
-							}
-						}
-					} else if (sstm.o.saved.Plnt.market != null) {
-						markets.push(sstm.o.saved.Plnt.market)
-					}
-				}
-			}
-		}
-
-		return markets
-	})
+	return findNodes(saveObj, marketMatcher)
 }
 
-let matches = []
+/**
+ * @callback findNodesMatchFun
+ * @param {string} key
+ * @param {object} object
+ * @return boolean
+ */
 
-function findVal(object, key, path) {
-	let value
-	Object.keys(object).forEach((k) => {
-		if (k === key) {
-			value = object[k]
-			matches.push([value, path])
-			return true
+/**
+ * Recursively inside the root object that match the matcher function
+ * @param object
+ * @param {findNodesMatchFun} matchFun
+ * @param collector
+ * @return {*[]}
+ */
+function findNodes(object, matchFun, collector = []) {
+	const keys = Object.keys(object)
+	for (const key of keys) {
+		if (matchFun(key, object[key])) {
+			collector.push(object[key])
 		}
 
-		if (object[k] && typeof object[k] === "object") {
-			const pathToUse = k // !isNaN(Number(k)) ? "[index]" : k
-			const locPath = path != null ? `${path}.${pathToUse}` : pathToUse
-			value = findVal(object[k], key, locPath)
-			return value != null
+		if (typeof object[key] === "object") {
+			findNodes(object[key], matchFun, collector)
 		}
-	})
-	return value
+	}
+	return collector
 }
