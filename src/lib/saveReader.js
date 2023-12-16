@@ -66,7 +66,7 @@ export async function readSaveFile(saveFile) {
 	getCharacter()
 
 	const end = performance.now()
-	console.log(`it took ${(end - start) / 1000} seconds`)
+	console.log(`Loaded save in ${end - start} ms`)
 }
 
 function getCoords() {
