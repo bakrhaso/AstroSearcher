@@ -1,8 +1,12 @@
 # Starsector data
 
-planet_gen_data.csv can be found in data/campaign/procgen for vanilla and mods.
+Data files from mods can be found in the same location as in the vanilla game, but in its mod folder. For DIY Planets
+it would for example be mods/DIYPlanets/data/campaign/procgen.
 
-Example campaign.xml can be found in devData, this save file also has several mods in it including Nexerelin, Industrial.Evolution, and DIY Planets.
+- planet_gen_data.csv can be found in data/campaign/procgen.
+- condition_gen_data.csv can be found in data/campaign/procgen. I use the `_no_pick`-suffixed entires to match NOT having a resource.
+
+An example save file (campaign.xml) can be found in devData, this save file also has several mods in it including Nexerelin, Industrial.Evolution, and DIY Planets.
 
 # create-svelte
 

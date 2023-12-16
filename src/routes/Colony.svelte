@@ -14,6 +14,10 @@
 	const colony = {
 		planetTypeDisplayNames: new Set(),
 		conditions: new Set(),
+		resources: new Set(),
+		buildings: new Set(),
+		hasGate: false,
+		hasRelay: false,
 	}
 	$colonyFilterStore[index] = colony
 
