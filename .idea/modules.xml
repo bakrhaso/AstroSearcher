@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ColonyFinder.iml" filepath="$PROJECT_DIR$/.idea/ColonyFinder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/AstroSearcher.iml" filepath="$PROJECT_DIR$/.idea/AstroSearcher.iml" />
     </modules>
   </component>
 </project>
