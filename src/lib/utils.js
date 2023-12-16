@@ -28,3 +28,7 @@ export function stringComparator(a, b, order = "ASC") {
 		return 0
 	}
 }
+
+export function nonneg(num) {
+	return num < 0 ? 0 : num
+}

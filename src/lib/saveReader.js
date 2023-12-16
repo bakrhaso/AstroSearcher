@@ -1,3 +1,5 @@
+import { Body } from "$lib/Body.js"
+
 /**
  * @type {CharData}
  */
@@ -155,44 +157,46 @@ function getSystems() {
 	const nodes = xml.querySelectorAll(':is(Sstm, [cl="Sstm"])[z]')
 
 	for (const systemNode of nodes) {
-		if (systemNode != null && !(typeof getCoord(systemNode) === "undefined")) {
-			const name = systemNode.getAttribute("bN")
-			const coord = getCoord(systemNode).textContent.split("|")
-			const tagsElement = getNamedChild(systemNode, "tags")
-			const tags = []
-
-			// TODO in the original this code didn't work, the if checked if `children` was null instead of `tagsElement.children`
-			if (tagsElement?.children != null) {
-				for (const st of tagsElement.children) {
-					tags.push(st.textContent)
-				}
-			}
-
-			const system = {
-				name,
-				x: Number(coord[0]),
-				y: Number(coord[1]),
-				tags,
-			}
-
-			if (tags.includes("has_coronal_tap")) {
-				const ccent = derefNode(systemNode.getElementsByTagName("tap")[0])
-				const discovered = ccent.getAttribute("di") !== "true"
-				system.coronalTap = true
-				system.coronalTapDiscovered = discovered
-			}
-
-			if (tags.includes("theme_derelict_cryosleeper")) {
-				const ccent = systemNode.querySelector('[cl="CryosleeperEntityPlugin"]').parentElement
-				const discovered = ccent.getAttribute("di") !== "true"
-				system.cryosleeper = true
-				system.cryosleeperDiscovered = discovered
-			}
-
-			// TODO the todo below was here in the original, not sure what it means
-			// TODO: if (system_node.querySelector('CampaignTerrain[type="pulsar_beam"])) {}
-			systems[z(systemNode)] = system
+		if (systemNode == null || getCoord(systemNode) == null) {
+			continue
 		}
+
+		const name = systemNode.getAttribute("bN")
+		const coord = getCoord(systemNode).textContent.split("|")
+		const tagsElement = getNamedChild(systemNode, "tags")
+		const tags = []
+
+		// TODO in the original this code didn't work, the if checked if `children` was null instead of `tagsElement.children`
+		if (tagsElement?.children != null) {
+			for (const st of tagsElement.children) {
+				tags.push(st.textContent)
+			}
+		}
+
+		const system = {
+			name,
+			x: Number(coord[0]),
+			y: Number(coord[1]),
+			tags,
+		}
+
+		if (tags.includes("has_coronal_tap")) {
+			const ccent = derefNode(systemNode.getElementsByTagName("tap")[0])
+			const discovered = ccent.getAttribute("di") !== "true"
+			system.coronalTap = true
+			system.coronalTapDiscovered = discovered
+		}
+
+		if (tags.includes("theme_derelict_cryosleeper")) {
+			const ccent = systemNode.querySelector('[cl="CryosleeperEntityPlugin"]').parentElement
+			const discovered = ccent.getAttribute("di") !== "true"
+			system.cryosleeper = true
+			system.cryosleeperDiscovered = discovered
+		}
+
+		// TODO the todo below was here in the original, not sure what it means
+		// TODO: if (system_node.querySelector('CampaignTerrain[type="pulsar_beam"])) {}
+		systems[z(systemNode)] = system
 	}
 }
 
@@ -255,16 +259,7 @@ function getBodies() {
 			continue
 		}
 
-		const bodyObj = new Body(
-			system,
-			name,
-			type,
-			surveyLevel,
-			conditions,
-			tags,
-			ruinExplored,
-			coreTechMiningMult,
-		)
+		const bodyObj = new Body(system, name, type, surveyLevel, conditions, tags, ruinExplored, coreTechMiningMult)
 
 		const bodyId = z(body)
 		const radius = Number(getNamedChild(body, "radius").textContent)
@@ -285,40 +280,6 @@ function getBodies() {
 
 			system.stars.push(bodyObj)
 		}
-	}
-}
-
-function getNamedChild(node, tagName) {
-	if (node instanceof Element) {
-		for (const child of node.children) {
-			if (child.tagName === tagName) {
-				return child
-			}
-		}
-	}
-}
-
-function getCoord(system) {
-	const coord = getNamedChild(system, "l")
-	if (coord && coord.hasAttribute("ref")) {
-		return coords[ref(coord)]
-	}
-	return coord
-}
-
-function derefNode(node) {
-	if (!node || node.hasAttribute("z")) {
-		return node
-	} else if (node.hasAttribute("ref")) {
-		return xml.querySelector('[z="' + ref(node) + '"]')
-	}
-}
-
-function getSystem(body) {
-	const system = getNamedChild(body, "cL")
-	if (system) {
-		const id = z(system) ?? ref(system)
-		return systems[id]
 	}
 }
 
@@ -346,6 +307,40 @@ function getConditions(market) {
 	}
 
 	return conditions
+}
+
+function getSystem(body) {
+	const system = getNamedChild(body, "cL")
+	if (system) {
+		const id = z(system) ?? ref(system)
+		return systems[id]
+	}
+}
+
+function getCoord(system) {
+	const coord = getNamedChild(system, "l")
+	if (coord && coord.hasAttribute("ref")) {
+		return coords[ref(coord)]
+	}
+	return coord
+}
+
+function getNamedChild(node, tagName) {
+	if (node instanceof Element) {
+		for (const child of node.children) {
+			if (child.tagName === tagName) {
+				return child
+			}
+		}
+	}
+}
+
+function derefNode(node) {
+	if (!node || node.hasAttribute("z")) {
+		return node
+	} else if (node.hasAttribute("ref")) {
+		return xml.querySelector('[z="' + ref(node) + '"]')
+	}
 }
 
 function z(node) {

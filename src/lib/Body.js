@@ -1,6 +1,11 @@
 import { surveyLevelToNumber } from "$lib/gameUtils.js"
+import { CONDITION_EFFECTS } from "$lib/ConditionEffects.js"
+import { Stat } from "$lib/Stat.js"
+import { INDUSTRIES } from "$lib/Industries.js"
+import { nonneg } from "$lib/utils.js"
+import { COMMODITIES } from "$lib/Commodities.js"
 
-class Body {
+export class Body {
 	constructor(system, name, type, surveyLevel, keywords, tags, ruinExplored, coreTechMiningMult) {
 		this.system = system
 		this.name = name
@@ -52,7 +57,7 @@ class Body {
 		for (const keyword of keywords) {
 			const effects = CONDITION_EFFECTS[keyword]
 			for (const cond in effects) {
-				if (cond !== "hazard_rating" && cond !== "stability") {
+				if (cond !== "hazardRating" && cond !== "stability") {
 					this.conditions[cond] = effects[cond]
 				}
 			}
@@ -78,25 +83,25 @@ class Body {
 		for (const keyword of this.keywords) {
 			const effects = CONDITION_EFFECTS[keyword]
 			for (const cond in effects) {
-				if (cond == "hazard_rating") {
-					stats.hazardRating.add(effects[cond], HAZARD_NAMES[keyword])
-				} else if (cond == "stability") {
-					stats.stability.add(effects[cond], HAZARD_NAMES[keyword])
+				if (cond === "hazardRating") {
+					stats.hazardRating.add(effects[cond], effects.name)
+				} else if (cond === "stability") {
+					stats.stability.add(effects[cond], effects.name)
 				}
 			}
 		}
 
 		if (this.keywords.includes("solar_array")) {
-			stats.hazardRating.unadd(HAZARD_NAMES.hot)
-			stats.hazardRating.unadd(HAZARD_NAMES.poor_light)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.hot.name)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.poor_light.name)
 		}
 
 		if (criteria.structures.population.orbital_fusion_lamp_optional) {
 			if (
-				stats.hazardRating.includes(HAZARD_NAMES.cold) ||
-				stats.hazardRating.includes(HAZARD_NAMES.very_cold) ||
-				stats.hazardRating.includes(HAZARD_NAMES.poor_light) ||
-				stats.hazardRating.includes(HAZARD_NAMES.dark)
+				stats.hazardRating.includes(CONDITION_EFFECTS.cold.name) ||
+				stats.hazardRating.includes(CONDITION_EFFECTS.very_cold.name) ||
+				stats.hazardRating.includes(CONDITION_EFFECTS.poor_light.name) ||
+				stats.hazardRating.includes(CONDITION_EFFECTS.dark.name)
 			) {
 				criteria.structures.population.artifact = "orbital_fusion_lamp"
 				criteria.structures.population.orbital_fusion_lamp = true
@@ -107,13 +112,13 @@ class Body {
 		}
 
 		if (criteria.structures.population.orbital_fusion_lamp) {
-			stats.hazardRating.unadd(HAZARD_NAMES.cold)
-			stats.hazardRating.unadd(HAZARD_NAMES.very_cold)
-			stats.hazardRating.unadd(HAZARD_NAMES.poor_light)
-			stats.hazardRating.unadd(HAZARD_NAMES.dark)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.cold.name)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.very_cold.name)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.poor_light.name)
+			stats.hazardRating.unadd(CONDITION_EFFECTS.dark.name)
 			if (this.keywords.includes("hot")) {
-				stats.hazardRating.unadd(HAZARD_NAMES.hot)
-				stats.hazardRating.add(CONDITION_EFFECTS.very_hot.hazard_rating, HAZARD_NAMES.very_hot)
+				stats.hazardRating.unadd(CONDITION_EFFECTS.hot.name)
+				stats.hazardRating.add(CONDITION_EFFECTS.very_hot.hazardRating, CONDITION_EFFECTS.very_hot.name)
 				stats.lampHeat = 1
 			} else if (
 				!(
@@ -122,7 +127,7 @@ class Body {
 					this.keywords.includes("very_cold")
 				)
 			) {
-				stats.hazardRating.add(CONDITION_EFFECTS.hot.hazard_rating, HAZARD_NAMES.hot)
+				stats.hazardRating.add(CONDITION_EFFECTS.hot.hazardRating, CONDITION_EFFECTS.hot.name)
 				stats.lampHeat = 1
 			}
 		}
@@ -130,32 +135,32 @@ class Body {
 		return stats
 	}
 
-	evaluate_artifacts() {
-		this.possible_artifacts = {
-			coronal_portal: true, // Hypershunt Tap. See consider_other_factors for 10 ly logic.
-			orbital_fusion_lamp: true,
-			fullerene_spool: this.type != "gas_giant" && this.conditions.weather < 2 && this.conditions.tectonics < 2,
-			soil_nanites:
+	evaluateArtifacts() {
+		this.possibleArtifacts = {
+			coronalPortal: true, // Hypershunt Tap. See consider_other_factors for 10 ly logic.
+			orbitalFusionLamp: true,
+			fullereneSpool: this.type !== "gas_giant" && this.conditions.weather < 2 && this.conditions.tectonics < 2,
+			soilNanites:
 				this.conditions.farming && !("rare_ore" in this.conditions) && !("volatiles" in this.conditions),
-			mantle_bore: this.type != "gas_giant" && !this.keywords.includes("habitable"),
-			plasma_dynamo: this.type == "gas_giant", // TODO: || ice_giant
-			catalytic_core: this.conditions.atmosphere == 0,
-			biofactory_embryo: this.keywords.includes("habitable"),
-			corrupted_nanoforge: true,
-			pristine_nanoforge: true,
-			synchrotron: this.conditions.atmosphere == 0,
-			dealmaker_holosuite: true,
-			cryoarithmetic_engine: this.keywords.includes("hot") || this.keywords.includes("very_hot"), // Installable on Hot planet with Orbital Solar Array!
-			drone_replicator: true,
+			mantleBore: this.type !== "gas_giant" && !this.keywords.includes("habitable"),
+			plasmaDynamo: this.type === "gas_giant", // TODO: || ice_giant
+			catalyticCore: this.conditions.atmosphere === 0,
+			biofactoryEmbryo: this.keywords.includes("habitable"),
+			corruptedNanoforge: true,
+			pristineNanoforge: true,
+			synchrotron: this.conditions.atmosphere === 0,
+			dealmakerHolosuite: true,
+			cryoarithmeticEngine: this.keywords.includes("hot") || this.keywords.includes("very_hot"), // Installable on Hot planet with Orbital Solar Array!
+			droneReplicator: true,
 		}
 	}
 
-	apply_structure_effects(stats, structure, config, timing) {
-		const effect_func = timing == "early" ? "early_effects" : "effects"
-		if (!(effect_func in INDUSTRIES[structure])) {
+	applyStructureEffects(stats, structure, config, timing) {
+		const effectFunc = timing === "early" ? "early_effects" : "effects"
+		if (!(effectFunc in INDUSTRIES[structure])) {
 			return false
 		}
-		const effects = INDUSTRIES[structure][effect_func](this, stats, config) || {}
+		const effects = INDUSTRIES[structure][effectFunc](this, stats, config) || {}
 		for (const cond in effects) {
 			if (cond.endsWith("_multiplier")) {
 				stats[cond].push(effects[cond])
@@ -166,52 +171,52 @@ class Body {
 		}
 	}
 
-	prefilter_structures(criteria, spoiler_level) {
-		let ruins_pass = true
+	prefilterStructures(criteria, spoiler_level) {
+		let ruinsPass = true
 		if (criteria.requested_ruins_score != null) {
-			if (this.conditions.tech == null) ruins_pass = false
-			else ruins_pass = this.conditions.tech >= criteria.requested_ruins_score
+			if (this.conditions.tech == null) ruinsPass = false
+			else ruinsPass = this.conditions.tech >= criteria.requested_ruins_score
 		}
-		let ore_pass = true
+		let orePass = true
 		if (criteria.requested_ore_score != null) {
-			if (this.conditions.ore == null) ore_pass = false
-			else ore_pass = this.conditions.ore >= criteria.requested_ore_score
+			if (this.conditions.ore == null) orePass = false
+			else orePass = this.conditions.ore >= criteria.requested_ore_score
 		}
-		let rare_ore_pass = true
+		let rareOrePass = true
 		if (criteria.requested_rare_ore_score != null) {
-			if (this.conditions.rare_ore == null) rare_ore_pass = false
-			else rare_ore_pass = this.conditions.rare_ore >= criteria.requested_rare_ore_score
+			if (this.conditions.rare_ore == null) rareOrePass = false
+			else rareOrePass = this.conditions.rare_ore >= criteria.requested_rare_ore_score
 		}
-		let volatiles_pass = true
+		let volatilesPass = true
 		if (criteria.requested_volatiles_score != null) {
-			if (this.conditions.volatiles == null) volatiles_pass = false
-			else volatiles_pass = this.conditions.volatiles >= criteria.requested_volatiles_score
+			if (this.conditions.volatiles == null) volatilesPass = false
+			else volatilesPass = this.conditions.volatiles >= criteria.requested_volatiles_score
 		}
-		let organics_pass = true
+		let organicsPass = true
 		if (criteria.requested_organics_score != null) {
-			if (this.conditions.organics == null) organics_pass = false
-			else organics_pass = this.conditions.organics >= criteria.requested_organics_score
+			if (this.conditions.organics == null) organicsPass = false
+			else organicsPass = this.conditions.organics >= criteria.requested_organics_score
 		}
-		let farmland_pass = true
+		let farmlandPass = true
 		if (criteria.requested_farmland_score != null) {
-			if (this.conditions.tech == null) farmland_pass = false
-			else farmland_pass = this.conditions.food >= criteria.requested_farmland_score
+			if (this.conditions.tech == null) farmlandPass = false
+			else farmlandPass = this.conditions.food >= criteria.requested_farmland_score
 		}
 
 		const needs = criteria.structures
 		return (
-			ruins_pass &&
-			ore_pass &&
-			rare_ore_pass &&
-			volatiles_pass &&
-			organics_pass &&
-			farmland_pass &&
+			ruinsPass &&
+			orePass &&
+			rareOrePass &&
+			volatilesPass &&
+			organicsPass &&
+			farmlandPass &&
 			!(
 				(needs.techmining && !this.conditions.techmining) ||
 				(needs.farmingaquaculture && !(this.conditions.farming || this.conditions.aquaculture)) ||
 				(needs.mining && !this.conditions.mining) ||
 				(needs.population?.coronal_portal &&
-					((spoiler_level == 0 && this.coronalTapDiscovered === false) ||
+					((spoiler_level === 0 && this.coronalTapDiscovered === false) ||
 						(spoiler_level > 0 && this.coronalTap === false))) ||
 				((needs.spaceport?.fullerene_spool || needs.megaport?.fullerene_spool) &&
 					!this.possible_artifacts.fullerene_spool) ||
@@ -226,13 +231,13 @@ class Body {
 						needs.militarybase?.cryoarithmetic_engine ||
 						needs.highcommand?.cryoarithmetic_engine)) ||
 				(needs.cryorevival &&
-					((spoiler_level == 0 && this.cryosleeperDiscovered === false) ||
+					((spoiler_level === 0 && this.cryosleeperDiscovered === false) ||
 						(spoiler_level > 0 && this.cryosleeper === false))) ||
 				(criteria.market.domain_relay &&
-					((spoiler_level == 0 && !this.domain_relay_discovered) ||
+					((spoiler_level === 0 && !this.domain_relay_discovered) ||
 						(spoiler_level > 0 && !this.domain_relay))) ||
 				(criteria.market.gate &&
-					((spoiler_level == 0 && !this.gate_discovered) || (spoiler_level > 0 && !this.gate))) ||
+					((spoiler_level === 0 && !this.gate_discovered) || (spoiler_level > 0 && !this.gate))) ||
 				(criteria.market.solar_array && !this.keywords.includes("solar_array")) ||
 				(criteria.market.habitable && !this.keywords.includes("habitable")) ||
 				(criteria.market.decivilized && !this.keywords.includes("decivilized")) ||
@@ -279,40 +284,40 @@ class Body {
 					!criteria.market.type_volcanic &&
 					!criteria.market.type_water
 				) &&
-					((!criteria.market.type_arid && this.type == "arid") ||
+					((!criteria.market.type_arid && this.type === "arid") ||
 						(!criteria.market.type_barren &&
-							(this.type == "barren" ||
-								this.type == "barren2" ||
-								this.type == "barren3" ||
-								this.type == "barren_castiron" ||
-								this.type == "barren_venuslike")) ||
-						(!criteria.market.type_barren_bombarded && this.type == "barren-bombarded") ||
-						(!criteria.market.type_barren_desert && this.type == "barren-desert") ||
-						(!criteria.market.type_cryovolcanic && this.type == "cryovolcanic") ||
-						(!criteria.market.type_desert && (this.type == "desert" || this.type == "desert1")) ||
+							(this.type === "barren" ||
+								this.type === "barren2" ||
+								this.type === "barren3" ||
+								this.type === "barren_castiron" ||
+								this.type === "barren_venuslike")) ||
+						(!criteria.market.type_barren_bombarded && this.type === "barren-bombarded") ||
+						(!criteria.market.type_barren_desert && this.type === "barren-desert") ||
+						(!criteria.market.type_cryovolcanic && this.type === "cryovolcanic") ||
+						(!criteria.market.type_desert && (this.type === "desert" || this.type === "desert1")) ||
 						(!criteria.market.type_frozen &&
-							(this.type == "frozen" ||
-								this.type == "frozen1" ||
-								this.type == "frozen2" ||
-								this.type == "frozen3")) ||
-						(!criteria.market.type_gas_giant && this.type == "gas_giant") ||
-						(!criteria.market.type_ice_giant && this.type == "ice_giant") ||
-						(!criteria.market.type_irradiated && this.type == "irradiated") ||
-						(!criteria.market.type_jungle && this.type == "jungle") ||
-						(!criteria.market.type_rocky_ice && this.type == "rocky_ice") ||
-						(!criteria.market.type_rocky_metallic && this.type == "rocky_metallic") ||
-						(!criteria.market.type_rocky_unstable && this.type == "rocky_unstable") ||
-						(!criteria.market.type_terran && this.type == "terran") ||
-						(!criteria.market.type_terran_eccentric && this.type == "terran-eccentric") ||
-						(!criteria.market.type_toxic && (this.type == "toxic" || this.type == "toxic_cold")) ||
-						(!criteria.market.type_tundra && this.type == "tundra") ||
-						(!criteria.market.type_volcanic && (this.type == "lava_minor" || this.type == "lava")) ||
-						(!criteria.market.type_water && this.type == "water")))
+							(this.type === "frozen" ||
+								this.type === "frozen1" ||
+								this.type === "frozen2" ||
+								this.type === "frozen3")) ||
+						(!criteria.market.type_gas_giant && this.type === "gas_giant") ||
+						(!criteria.market.type_ice_giant && this.type === "ice_giant") ||
+						(!criteria.market.type_irradiated && this.type === "irradiated") ||
+						(!criteria.market.type_jungle && this.type === "jungle") ||
+						(!criteria.market.type_rocky_ice && this.type === "rocky_ice") ||
+						(!criteria.market.type_rocky_metallic && this.type === "rocky_metallic") ||
+						(!criteria.market.type_rocky_unstable && this.type === "rocky_unstable") ||
+						(!criteria.market.type_terran && this.type === "terran") ||
+						(!criteria.market.type_terran_eccentric && this.type === "terran-eccentric") ||
+						(!criteria.market.type_toxic && (this.type === "toxic" || this.type === "toxic_cold")) ||
+						(!criteria.market.type_tundra && this.type === "tundra") ||
+						(!criteria.market.type_volcanic && (this.type === "lava_minor" || this.type === "lava")) ||
+						(!criteria.market.type_water && this.type === "water")))
 			)
 		)
 	}
 
-	rename_farmingaquaculture(criteria) {
+	renameFarmingaquaculture(criteria) {
 		if (criteria.structures.farmingaquaculture) {
 			if (this.conditions.farming) {
 				criteria.structures.farming = criteria.structures.farmingaquaculture
@@ -323,19 +328,19 @@ class Body {
 		}
 	}
 
-	calculate_accessibility(criteria, stats, economy) {
+	calculateAccessibility(criteria, stats, economy) {
 		// Accessibility can be negative
-		const distance_access = economy.search_markets[criteria.new_colony_id].proximity_isolation
-		if (distance_access >= 0) {
-			stats.accessibility.add(distance_access, "Proximity to other colonies")
+		const distanceAccess = economy.search_markets[criteria.new_colony_id].proximity_isolation
+		if (distanceAccess >= 0) {
+			stats.accessibility.add(distanceAccess, "Proximity to other colonies")
 		} else {
-			stats.accessibility.add(distance_access, "Isolation from other colonies")
+			stats.accessibility.add(distanceAccess, "Isolation from other colonies")
 		}
 		stats.accessibility.add(-economy.faction_hostilities.player, "Hostilities with other factions")
-		if (this.conditions.gravity == 0) {
-			stats.accessibility.add(0.1, HAZARD_NAMES["low_gravity"])
-		} else if (this.conditions.gravity == 2) {
-			stats.accessibility.add(-0.1, HAZARD_NAMES["high_gravity"])
+		if (this.conditions.gravity === 0) {
+			stats.accessibility.add(0.1, CONDITION_EFFECTS.low_gravity.name)
+		} else if (this.conditions.gravity === 2) {
+			stats.accessibility.add(-0.1, CONDITION_EFFECTS.high_gravity.name)
 		}
 		if (this.size >= 5) {
 			stats.accessibility.add(0.1 + 0.05 * nonneg(this.size - 5), "Colony size")
@@ -350,11 +355,11 @@ class Body {
 			stats.accessibility.add(0.1, "Hypercognition")
 		}
 		for (const structure in criteria.structures) {
-			this.apply_structure_effects(stats, structure, criteria.structures[structure], "early")
+			this.applyStructureEffects(stats, structure, criteria.structures[structure], "early")
 		}
 	}
 
-	calculate_demand(criteria, stats) {
+	calculateDemand(criteria, stats) {
 		stats.demands = {}
 		for (const structure in criteria.structures) {
 			const config = criteria.structures[structure]
@@ -371,18 +376,18 @@ class Body {
 		}
 	}
 
-	calculate_commodity_pool(stats, crossfaction_supply, infaction_supply) {
+	calculateCommodityPool(stats, crossfaction_supply, infaction_supply) {
 		stats.commodities = {}
-		const port_cap = Math.max(0, Math.floor(stats.accessibility.value() * 10))
-		const infaction_cap = Math.max(0, Math.floor(stats.accessibility.value() * 10) + 5)
+		const portCap = Math.max(0, Math.floor(stats.accessibility.value() * 10))
+		const infactionCap = Math.max(0, Math.floor(stats.accessibility.value() * 10) + 5)
 		for (const commodity_id in COMMODITIES) {
 			const commodity = {
 				demanded: stats.demands[commodity_id] ?? 0,
 				produced: stats.products[commodity_id] ?? 0,
 				used_local: 0,
-				available_infaction: Math.min(infaction_cap, infaction_supply[commodity_id] ?? 0),
+				available_infaction: Math.min(infactionCap, infaction_supply[commodity_id] ?? 0),
 				imported_infaction: 0,
-				available_crossfaction: Math.min(port_cap, crossfaction_supply[commodity_id] ?? 0),
+				available_crossfaction: Math.min(portCap, crossfaction_supply[commodity_id] ?? 0),
 				imported_crossfaction: 0,
 				shortage: 0,
 			}
@@ -406,10 +411,10 @@ class Body {
 		}
 	}
 
-	calculate_production(criteria, stats, crossfaction_supply, infaction_supply) {
-		this.calculate_commodity_pool(stats, crossfaction_supply, infaction_supply)
-		const infaction_cap = Math.max(0, Math.floor(stats.accessibility.value() * 10) + 5)
-		var availability_changed = false
+	calculateProduction(criteria, stats, crossfaction_supply, infaction_supply) {
+		this.calculateCommodityPool(stats, crossfaction_supply, infaction_supply)
+		const infactionCap = Math.max(0, Math.floor(stats.accessibility.value() * 10) + 5)
+		let availabilityChanged = false
 		for (const structure in criteria.structures) {
 			const config = criteria.structures[structure]
 			if ("products" in INDUSTRIES[structure]) {
@@ -423,25 +428,25 @@ class Body {
 					const produced = struct_prod[commodity]
 					if (produced > (stats.products[commodity] ?? 0)) {
 						stats.products[commodity] = produced
-						availability_changed = true
+						availabilityChanged = true
 					}
-					const exportable = Math.min(produced, infaction_cap)
+					const exportable = Math.min(produced, infactionCap)
 					if (exportable > (infaction_supply[commodity] ?? 0)) {
 						infaction_supply[commodity] = exportable
-						availability_changed = true
+						availabilityChanged = true
 					}
 				}
 			}
 		}
-		return availability_changed
+		return availabilityChanged
 	}
 
-	calculate_stats(criteria, stats, spoiler_level) {
+	calculateStats(criteria, stats, spoilerLevel) {
 		if (criteria.market.free_port) {
 			stats.stability.add(-3, "Free port")
 			stats.growth += 10
 		}
-		if ((spoiler_level == 0 && this.domain_relay_discovered) || (spoiler_level > 0 && this.domain_relay)) {
+		if ((spoilerLevel == 0 && this.domain_relay_discovered) || (spoilerLevel > 0 && this.domain_relay)) {
 			stats.stability.add(2, "Comm relay")
 		} else {
 			stats.stability.add(1, "Makeshift comm relay")
@@ -460,7 +465,7 @@ class Body {
 			stats.stability.add(1, "Hypercognition")
 		}
 		for (const structure in criteria.structures) {
-			this.apply_structure_effects(stats, structure, criteria.structures[structure], "late")
+			this.applyStructureEffects(stats, structure, criteria.structures[structure], "late")
 		}
 		const industry_count = Object.keys(criteria.structures).reduce((c, s) => c + INDUSTRIES[s].is_industry * 1, 0)
 		const max_industries = this.size - 2 + stats.tap_industry
@@ -483,33 +488,34 @@ class Body {
 		}
 	}
 
-	calculate_profit(criteria, stats, economy) {
-		var total_demanded = 0
-		var infaction_produced = 0
+	calculateProfit(criteria, stats, economy) {
+		let totalDemanded = 0
+		let infactionProduced = 0
 		for (const commodity in stats.demands) {
-			total_demanded += stats.demands[commodity]
+			totalDemanded += stats.demands[commodity]
 			if (stats.commodities[commodity].available_infaction >= stats.demands[commodity]) {
-				infaction_produced += Math.min(
+				infactionProduced += Math.min(
 					stats.commodities[commodity].available_infaction,
 					stats.demands[commodity],
 				)
 			} else if (stats.products[commodity]) {
-				infaction_produced += Math.min(stats.products[commodity], stats.demands[commodity])
+				infactionProduced += Math.min(stats.products[commodity], stats.demands[commodity])
 			}
 		}
-		const infaction_proportion = infaction_produced / total_demanded
-		const infaction_cost_mod = 1 - Math.round((100 * infaction_proportion) / 2) / 100
+		const infactionProportion = infactionProduced / totalDemanded
+		const infactionCostMod = 1 - Math.round((100 * infactionProportion) / 2) / 100
 		// Calculate total income and upkeep
 		stats.income.add(nonneg(this.size - 2) * 10000, "Local income")
 		for (const commodity in stats.products) {
-			if ((commodity == "drugs" || commodity == "organs") && !criteria.market.free_port) {
+			if ((commodity === "drugs" || commodity === "organs") && !criteria.market.free_port) {
 				continue
 			}
-			if (commodity == "crew" || commodity == "marines") {
+			if (commodity === "crew" || commodity === "marines") {
 				continue
 			}
-			const access_rounded = Math.round(100 * stats.accessibility.value()) / 100
-			const income = estimate_income(commodity, criteria.new_colony_id, economy)
+			// This was never used in the original
+			// const access_rounded = Math.round(100 * stats.accessibility.value()) / 100
+			const income = estimateIncome(commodity, criteria.new_colony_id, economy)
 			stats.income.add(income, COMMODITIES[commodity].name)
 		}
 		for (const structure in criteria.structures) {
@@ -518,15 +524,21 @@ class Body {
 			stats.upkeep.add(INDUSTRIES[structure].upkeep(this, stats, config) * aicore_mod, INDUSTRIES[structure].name)
 		}
 		stats.upkeep.mul(stats.hazard_rating.value(), "Hazard rating")
-		if (infaction_cost_mod == 1) {
-			stats.upkeep.mul(infaction_cost_mod, "All demand supplied out-of-faction; no upkeep reduction")
+		if (infactionCostMod === 1) {
+			stats.upkeep.mul(infactionCostMod, "All demand supplied out-of-faction; no upkeep reduction")
 		} else {
 			stats.upkeep.mul(
-				infaction_cost_mod,
-				`Demand supplied in-faction (${(100 * infaction_proportion).toFixed(0)}%)`,
+				infactionCostMod,
+				`Demand supplied in-faction (${(100 * infactionProportion).toFixed(0)}%)`,
 			)
 		}
 		stats.profit.add(stats.income.value(), "Income")
 		stats.profit.add(-stats.upkeep.value(), "Upkeep")
 	}
+}
+
+function estimateIncome(commodity, newColonyId, economy) {
+	const marketShare = economy.search_shares[commodity][newColonyId]
+	const globalMarketValue = COMMODITIES[commodity]?.value * economy.total_demand[commodity]
+	return marketShare * globalMarketValue
 }

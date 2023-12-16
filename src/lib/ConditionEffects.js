@@ -1,0 +1,57 @@
+/**
+ * The top-level keys have underscores in them to easily look up based on the names from the save XML file
+ */
+export const CONDITION_EFFECTS = {
+	ruins_scattered: { tech: 1, techmining: 1 },
+	ruins_widespread: { tech: 2, techmining: 1 },
+	ruins_extensive: { tech: 3, techmining: 1 },
+	ruins_vast: { tech: 4, techmining: 1 },
+	ore_sparse: { ore: -1, mining: 1 },
+	ore_moderate: { ore: 0, mining: 1 },
+	ore_abundant: { ore: 1, mining: 1 },
+	ore_rich: { ore: 2, mining: 1 },
+	ore_ultrarich: { ore: 3, mining: 1 },
+	rare_ore_sparse: { rareOre: -1, mining: 1 },
+	rare_ore_moderate: { rareOre: 0, mining: 1 },
+	rare_ore_abundant: { rareOre: 1, mining: 1 },
+	rare_ore_rich: { rareOre: 2, mining: 1 },
+	rare_ore_ultrarich: { rareOre: 3, mining: 1 },
+	volatiles_trace: { volatiles: -1, mining: 1 },
+	volatiles_diffuse: { volatiles: 0, mining: 1 },
+	volatiles_abundant: { volatiles: 1, mining: 1 },
+	volatiles_plentiful: { volatiles: 2, mining: 1 },
+	organics_trace: { organics: -1, mining: 1 },
+	organics_common: { organics: 0, mining: 1 },
+	organics_abundant: { organics: 1, mining: 1 },
+	organics_plentiful: { organics: 2, mining: 1 },
+	farmland_poor: { food: -1, farming: 1 },
+	farmland_adequate: { food: 0, farming: 1 },
+	farmland_rich: { food: 1, farming: 1 },
+	farmland_bountiful: { food: 2, farming: 1 },
+	solar_array: { solarFood: 2 }, // Also counters Hot and Poor Light
+
+	// Hazard-affecting conditions
+	habitable: { hazardRating: -0.25, growth: 4, name: "Habitable" },
+	decivilized: { hazardRating: 0.25, stability: -2, decivilization: 1, name: "Decivilized" }, // TODO: +size growth
+	cold: { hazardRating: 0.25, temperature: 1, name: "Cold" },
+	very_cold: { hazardRating: 0.5, temperature: 0, name: "Extreme Cold" },
+	hot: { hazardRating: 0.25, temperature: 3, name: "Hot" },
+	very_hot: { hazardRating: 0.5, temperature: 4, name: "Extreme Heat" },
+	tectonic_activity: { hazardRating: 0.25, tectonics: 1, name: "Tectonic Activity" },
+	extreme_tectonic_activity: { hazardRating: 0.5, tectonics: 2, name: "Extreme Tectonic Activity" },
+	no_atmosphere: { hazardRating: 0.5, atmosphere: 0, name: "No Atmosphere" },
+	thin_atmosphere: { hazardRating: 0.25, atmosphere: 1, name: "Thin Atmosphere" },
+	toxic_atmosphere: { hazardRating: 0.5, atmosphere: 4, name: "Toxic Atmosphere" },
+	dense_atmosphere: { hazardRating: 0.5, atmosphere: 3, name: "Dense Atmosphere" },
+	mild_climate: { hazardRating: -0.25, weather: 0, name: "Mild Climate" }, // Also a growth bonus
+	extreme_weather: { hazardRating: 0.25, weather: 2, name: "Extreme Weather" },
+	low_gravity: { hazardRating: 0.25, gravity: 0, name: "Low Gravity" },
+	high_gravity: { hazardRating: 0.5, gravity: 2, name: "High Gravity" },
+	irradiated: { hazardRating: 0.5, radiation: 1, name: "Irradiated" },
+	inimical_biosphere: { hazardRating: 0.25, biosphere: 1, name: "Inimical Biosphere" },
+	water_surface: { hazardRating: 0.25, water: 1, food: 0, aquaculture: 1, name: "Water-covered Surface" },
+	poor_light: { hazardRating: 0.25, light: 1, name: "Poor Light" },
+	dark: { hazardRating: 0.5, light: 0, name: "Darkness" },
+	meteor_impacts: { hazardRating: 0.5, meteors: 1, name: "Meteor Impacts" },
+	pollution: { hazardRating: 0.25, pollution: 1, name: "Pollution" },
+}
