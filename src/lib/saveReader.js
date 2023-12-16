@@ -38,6 +38,8 @@ let xml
 export async function readSaveFile(saveFile) {
 	const saveFileText = await saveFile.text()
 
+	const start = performance.now()
+
 	const parser = new DOMParser()
 	xml = parser.parseFromString(saveFileText, "text/xml")
 
@@ -64,6 +66,9 @@ export async function readSaveFile(saveFile) {
 	getCommRelays()
 	getGates()
 	getFleetDoctrines()
+
+	const end = performance.now()
+	console.log(`it took ${(end - start) / 1000} seconds`)
 }
 
 function getCoords() {
@@ -162,14 +167,15 @@ function getCOMkts() {
 			accessMods += Number(fB.getAttribute("v"))
 		}
 
-		comkts.push({
-			marketId: z(market),
+		const marketId = z(market)
+		comkts[marketId] = {
+			marketId,
 			faction: getNamedChild(market, "factionId").textContent,
 			commodity: comkt.getAttribute("c"),
 			supply: Number(comkt.getAttribute("mS")),
 			demand: Number(comkt.getAttribute("mD")),
 			accessMods: Math.round(100 * accessMods) / 100,
-		})
+		}
 	}
 }
 
