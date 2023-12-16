@@ -15,13 +15,19 @@
 		min-height: 100vh;
 	}
 
+	@media (max-width: 1200px) {
+		main {
+			min-width: 92%;
+		}
+	}
+
 	main {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		padding: 1rem;
 		width: 100%;
-		max-width: 60%;
+		max-width: 70%;
 		margin: 0 auto;
 		box-sizing: border-box;
 	}
