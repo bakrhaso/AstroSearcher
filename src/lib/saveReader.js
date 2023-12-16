@@ -6,14 +6,29 @@ import { Body } from "$lib/Body.js"
 export let character
 
 export let coords
+
+/**
+ * @type {Record<string, System>}
+ */
 export let systems
+
 export let bodies
+
 export let bodyCoords
+
 export let markets
+
 export let mcons
+
 export let relations
+
 export let factionWeights
+
 export let comkts
+
+export let fleetSizeDoctrine
+
+export let fleetQualityDoctrine
 
 let xml
 
@@ -35,6 +50,8 @@ export async function readSaveFile(saveFile) {
 	relations = {}
 	factionWeights = {}
 	comkts = {}
+	fleetSizeDoctrine = null
+	fleetQualityDoctrine = null
 
 	getCoords()
 	getRelations()
@@ -44,6 +61,9 @@ export async function readSaveFile(saveFile) {
 	getSystems()
 	getBodyCoords()
 	getBodies()
+	getCommRelays()
+	getGates()
+	getFleetDoctrines()
 }
 
 function getCoords() {
@@ -178,6 +198,8 @@ function getSystems() {
 			x: Number(coord[0]),
 			y: Number(coord[1]),
 			tags,
+			bodies: [],
+			stars: [],
 		}
 
 		if (tags.includes("has_coronal_tap")) {
@@ -236,7 +258,7 @@ function getBodies() {
 					if (mem1.children[0].textContent === "$ruinsExplored") {
 						ruinExplored = mem1.children[1].textContent
 					} else if (mem1.children[0].textContent === "$core_techMiningMult") {
-						coreTechMiningMult = mem1.children[1].textContent
+						coreTechMiningMult = Number(mem1.children[1].textContent)
 					}
 				}
 			}
@@ -283,9 +305,69 @@ function getBodies() {
 	}
 }
 
+function getCommRelays() {
+	const nodes = xml.querySelectorAll(':is(CommRelayEP, [cl="CommRelayEP"])')
+	outerloop: for (const commRelay of nodes) {
+		const ccent = commRelay.parentElement
+		const systemNode = getNamedChild(ccent, "cL")
+		const systemId = ref(systemNode) || z(systemNode)
+		const system = systems[systemId]
+
+		if (system?.bodies == null) {
+			continue
+		}
+
+		const tagsElement = getNamedChild(ccent, "tags")
+		for (const st of tagsElement.children) {
+			if (st.textContent === "makeshift") {
+				continue outerloop
+			}
+		}
+
+		const discovered = ccent.hasAttribute("di") && ccent.getAttribute("di") === "true"
+		for (const body of system.bodies) {
+			body.domainRelay = true
+			body.domainRelayDiscovered = discovered
+		}
+	}
+}
+
+function getGates() {
+	const nodes = xml.querySelectorAll(':is(GateEntityPlugin, [cl="GateEntityPlugin"])')
+	for (const gateNode of nodes) {
+		const ccent = gateNode.parentElement
+		const systemNode = getNamedChild(ccent, "cL")
+
+		const systemId = systemNode.getAttribute("ref") || systemNode.getAttribute("z")
+		const system = systems[systemId]
+
+		const discovered = gateNode.getAttribute("aI") === "true"
+
+		if (system?.bodies != null) {
+			for (const body of system.bodies) {
+				body.gate = true
+				body.gateDiscovered = discovered
+			}
+		}
+	}
+}
+
+function getFleetDoctrines() {
+	const playerFactionTag = derefNode(xml.getElementsByTagName('playerFaction')[0]);
+	const doctrineTag = getNamedChild(playerFactionTag, 'doctrine');
+
+	fleetSizeDoctrine = Number(getNamedChild(doctrineTag, 'numShips').textContent);
+	fleetQualityDoctrine = Number(getNamedChild(doctrineTag, 'shipQuality').textContent);
+}
+
+/**
+ *
+ * @param market
+ * @return {string[]}
+ */
 function getConditions(market) {
 	if (market == null) {
-		return
+		return []
 	}
 
 	const conditions = []
@@ -311,10 +393,12 @@ function getConditions(market) {
 
 function getSystem(body) {
 	const system = getNamedChild(body, "cL")
-	if (system) {
-		const id = z(system) ?? ref(system)
-		return systems[id]
+	if (system == null) {
+		return
 	}
+
+	const id = z(system) || ref(system)
+	return systems[id]
 }
 
 function getCoord(system) {

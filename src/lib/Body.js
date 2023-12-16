@@ -4,8 +4,19 @@ import { Stat } from "$lib/Stat.js"
 import { INDUSTRIES } from "$lib/Industries.js"
 import { nonneg } from "$lib/utils.js"
 import { COMMODITIES } from "$lib/Commodities.js"
+import { fleetQualityDoctrine, fleetSizeDoctrine } from "$lib/saveReader.js"
 
 export class Body {
+	/**
+	 * @param {System} system
+	 * @param {string} name
+	 * @param {string} type
+	 * @param {string} surveyLevel
+	 * @param {string[]} keywords
+	 * @param {string[]} tags
+	 * @param {"none" | "false" | "true"} ruinExplored
+	 * @param {number} coreTechMiningMult
+	 */
 	constructor(system, name, type, surveyLevel, keywords, tags, ruinExplored, coreTechMiningMult) {
 		this.system = system
 		this.name = name
@@ -17,10 +28,16 @@ export class Body {
 			this.setConditions(this.keywords)
 		}
 		this.tags = tags
+
 		this.coronalTap = false
 		this.coronalTapDiscovered = false
 		this.cryosleeper = false
 		this.cryosleeperDiscovered = false
+		this.domainRelay = false
+		this.domainRelayDiscovered = false
+		this.gate = false
+		this.gateDiscovered = false
+
 		this.ruinExplored = ruinExplored
 		if (this.ruinExplored === "none" && this.keywords != null) {
 			if (
@@ -364,12 +381,12 @@ export class Body {
 		for (const structure in criteria.structures) {
 			const config = criteria.structures[structure]
 			if ("demands" in INDUSTRIES[structure]) {
-				const struct_dem = INDUSTRIES[structure].demands(this, stats, config)
-				const aicore_discount = config.aicore ? 1 : 0
-				for (const commodity in struct_dem) {
+				const structDemands = INDUSTRIES[structure].demands(this, stats, config)
+				const aiCoreDiscount = config.aicore ? 1 : 0
+				for (const commodity in structDemands) {
 					stats.demands[commodity] = Math.max(
 						stats.demands[commodity] ?? 0,
-						nonneg(struct_dem[commodity] - aicore_discount),
+						nonneg(structDemands[commodity] - aiCoreDiscount),
 					)
 				}
 			}
@@ -446,17 +463,17 @@ export class Body {
 			stats.stability.add(-3, "Free port")
 			stats.growth += 10
 		}
-		if ((spoilerLevel == 0 && this.domain_relay_discovered) || (spoilerLevel > 0 && this.domain_relay)) {
+		if ((spoilerLevel === 0 && this.domain_relay_discovered) || (spoilerLevel > 0 && this.domain_relay)) {
 			stats.stability.add(2, "Comm relay")
 		} else {
 			stats.stability.add(1, "Makeshift comm relay")
 		}
 		stats.fleet_size.add(0.5 + 0.25 * nonneg(this.size - 3), "Colony size")
-		stats.fleet_size.mul(1 + 0.125 * (fleet_size_doctrine - 1), "Fleet doctrine")
-		stats.ship_quality.add(0.125 * (fleet_quality_doctrine - 1), "Fleet doctrine")
+		stats.fleet_size.mul(1 + 0.125 * (fleetSizeDoctrine - 1), "Fleet doctrine")
+		stats.ship_quality.add(0.125 * (fleetQualityDoctrine - 1), "Fleet doctrine")
 		// TODO: What about size 1 and 2?
 		stats.ground_forces.add(
-			this.size == 3 ? 50 : 100 * nonneg(this.size - 3),
+			this.size === 3 ? 50 : 100 * nonneg(this.size - 3),
 			`Base value for a size ${this.size} colony`,
 		)
 		if (criteria.market.hypercognition) {
@@ -467,24 +484,24 @@ export class Body {
 		for (const structure in criteria.structures) {
 			this.applyStructureEffects(stats, structure, criteria.structures[structure], "late")
 		}
-		const industry_count = Object.keys(criteria.structures).reduce((c, s) => c + INDUSTRIES[s].is_industry * 1, 0)
-		const max_industries = this.size - 2 + stats.tap_industry
-		if (industry_count > max_industries) {
+		const industryCount = Object.keys(criteria.structures).reduce((c, s) => c + INDUSTRIES[s].is_industry * 1, 0)
+		const maxIndustries = this.size - 2 + stats.tap_industry
+		if (industryCount > maxIndustries) {
 			stats.stability.add(-5, "Maximum number of industries exceeded")
 		}
 		if (stats.commodities.ships.shortage) {
-			const ships_proportion = 1 - stats.commodities.ships.shortage / stats.demands.ships
-			stats.fleet_size.mul(ships_proportion, "Ship hulls & weapons shortage")
+			const shipsProportion = 1 - stats.commodities.ships.shortage / stats.demands.ships
+			stats.fleet_size.mul(shipsProportion, "Ship hulls & weapons shortage")
 		}
 		if (!stats.commodities.ships.available_infaction) {
 			stats.ship_quality.add(-0.25, "Cross-faction imports")
 		}
-		const clamped_stability = Math.min(Math.max(stats.stability.value(), 0), 10)
-		stats.fleet_size.mul(0.75 + 0.05 * clamped_stability, "Stability")
-		stats.ship_quality.add(-0.25 + 0.05 * clamped_stability, "Stability")
-		stats.ground_forces.mul(0.25 + 0.075 * clamped_stability, "Stability")
-		if (clamped_stability < 5) {
-			stats.income.mul(clamped_stability / 5, "Stability")
+		const clampedStability = Math.min(Math.max(stats.stability.value(), 0), 10)
+		stats.fleet_size.mul(0.75 + 0.05 * clampedStability, "Stability")
+		stats.ship_quality.add(-0.25 + 0.05 * clampedStability, "Stability")
+		stats.ground_forces.mul(0.25 + 0.075 * clampedStability, "Stability")
+		if (clampedStability < 5) {
+			stats.income.mul(clampedStability / 5, "Stability")
 		}
 	}
 
@@ -523,7 +540,7 @@ export class Body {
 			const aicore_mod = config.aicore >= 2 ? 0.75 : 1
 			stats.upkeep.add(INDUSTRIES[structure].upkeep(this, stats, config) * aicore_mod, INDUSTRIES[structure].name)
 		}
-		stats.upkeep.mul(stats.hazard_rating.value(), "Hazard rating")
+		stats.upkeep.mul(stats.hazardRating.value(), "Hazard rating")
 		if (infactionCostMod === 1) {
 			stats.upkeep.mul(infactionCostMod, "All demand supplied out-of-faction; no upkeep reduction")
 		} else {
