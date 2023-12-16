@@ -19,13 +19,13 @@
 </script>
 
 <svelte:head>
-	<title>ColonyFinder</title>
+	<title>AstroSearcher</title>
 	<meta name="description" content="Find the perfect Starsector colony"/>
 </svelte:head>
 
 <section>
 	<h1>
-		ColonyFinder
+		AstroSearcher
 	</h1>
 
 	<label for="save">Select your save:</label>
