@@ -281,7 +281,7 @@ function getBodies() {
 		const conditions = getConditions(market)
 		const faction = getNamedChild(market, "factionId")?.textContent
 
-		if (faction != null || faction !== "player") {
+		if (faction != null && faction !== "player") {
 			continue
 		}
 
@@ -404,12 +404,10 @@ function getConditions(market) {
 
 function getSystem(body) {
 	const system = getNamedChild(body, "cL")
-	if (system == null) {
-		return
+	if (system != null) {
+		const id = z(system) || ref(system)
+		return systems[id]
 	}
-
-	const id = z(system) || ref(system)
-	return systems[id]
 }
 
 function getCoord(system) {

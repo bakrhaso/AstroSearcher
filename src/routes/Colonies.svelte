@@ -10,6 +10,9 @@
 </script>
 
 <div id="colonies">
+	<p>The "Any ... Condition" will match any condition. This is the same as not making a selection at all.</p>
+	<p>The "No ... Condition" will match planets that do not have any of the conditions in that group.</p>
+	<p>Resources (ore, farmland, etc.) will match the selected option or better.</p>
 	{#each {length: colonies} as _, index}
 		<div class="colony-wrapper">
 			Colony {index + 1}

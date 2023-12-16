@@ -5,6 +5,7 @@ import { INDUSTRIES } from "$lib/Industries.js"
 import { nonneg } from "$lib/utils.js"
 import { COMMODITIES } from "$lib/Commodities.js"
 import { fleetQualityDoctrine, fleetSizeDoctrine } from "$lib/saveReader.js"
+import { cachedConds } from "$lib/criteriaOptions.js"
 
 export class Body {
 	/**
@@ -27,6 +28,7 @@ export class Body {
 		if (this.keywords) {
 			this.setConditions(this.keywords)
 		}
+		this.setConditionsV2(this.keywords)
 		this.tags = tags
 
 		this.coronalTap = false
@@ -50,6 +52,21 @@ export class Body {
 			}
 		}
 		this.coreTechMiningMult = coreTechMiningMult
+
+		this.evaluateArtifacts()
+	}
+
+	setConditionsV2(keywords) {
+		this.conditionsV2 = {}
+		this.conditionGroups = {}
+		for (const keyword of keywords) {
+			const cond = cachedConds()[keyword]
+
+			if (cond == null) continue
+
+			this.conditionsV2[keyword] = cond
+			this.conditionGroups[cond.group] = cond
+		}
 	}
 
 	setConditions(keywords) {
@@ -188,53 +205,34 @@ export class Body {
 		}
 	}
 
-	prefilterStructures(criteria, spoiler_level) {
-		let ruinsPass = true
-		if (criteria.requested_ruins_score != null) {
-			if (this.conditions.tech == null) ruinsPass = false
-			else ruinsPass = this.conditions.tech >= criteria.requested_ruins_score
+	/**
+	 *
+	 * @param {Colony} criteria
+	 * @param {number} spoilerLevel
+	 * @return {boolean}
+	 */
+	prefilterStructures(criteria, spoilerLevel = 0) {
+		// key = group (ruins), value = amount (ruins_widespread)
+		for (const [key, value] of criteria.conditions.gte.entries()) {
+			if (this.conditionGroups[key] == null) return false
+			const match = this.conditionGroups[key].rank >= cachedConds()[value].rank
+			if (!match) return false
 		}
-		let orePass = true
-		if (criteria.requested_ore_score != null) {
-			if (this.conditions.ore == null) orePass = false
-			else orePass = this.conditions.ore >= criteria.requested_ore_score
-		}
-		let rareOrePass = true
-		if (criteria.requested_rare_ore_score != null) {
-			if (this.conditions.rare_ore == null) rareOrePass = false
-			else rareOrePass = this.conditions.rare_ore >= criteria.requested_rare_ore_score
-		}
-		let volatilesPass = true
-		if (criteria.requested_volatiles_score != null) {
-			if (this.conditions.volatiles == null) volatilesPass = false
-			else volatilesPass = this.conditions.volatiles >= criteria.requested_volatiles_score
-		}
-		let organicsPass = true
-		if (criteria.requested_organics_score != null) {
-			if (this.conditions.organics == null) organicsPass = false
-			else organicsPass = this.conditions.organics >= criteria.requested_organics_score
-		}
-		let farmlandPass = true
-		if (criteria.requested_farmland_score != null) {
-			if (this.conditions.tech == null) farmlandPass = false
-			else farmlandPass = this.conditions.food >= criteria.requested_farmland_score
+
+		for (const [_key, value] of criteria.conditions.exact.entries()) {
+			const match = this.conditionsV2[value] != null
+			if (!match) return false
 		}
 
 		const needs = criteria.structures
 		return (
-			ruinsPass &&
-			orePass &&
-			rareOrePass &&
-			volatilesPass &&
-			organicsPass &&
-			farmlandPass &&
 			!(
 				(needs.techmining && !this.conditions.techmining) ||
 				(needs.farmingaquaculture && !(this.conditions.farming || this.conditions.aquaculture)) ||
 				(needs.mining && !this.conditions.mining) ||
 				(needs.population?.coronalPortal &&
-					((spoiler_level === 0 && this.coronalTapDiscovered === false) ||
-						(spoiler_level > 0 && this.coronalTap === false))) ||
+					((spoilerLevel === 0 && this.coronalTapDiscovered === false) ||
+						(spoilerLevel > 0 && this.coronalTap === false))) ||
 				((needs.spaceport?.fullereneSpool || needs.megaport?.fullereneSpool) &&
 					!this.possibleArtifacts.fullereneSpool) ||
 				(needs.farmingaquaculture?.soilNanites && !this.possibleArtifacts.soilNanites) ||
@@ -248,13 +246,13 @@ export class Body {
 						needs.militarybase?.cryoarithmeticEngine ||
 						needs.highcommand?.cryoarithmeticEngine)) ||
 				(needs.cryorevival &&
-					((spoiler_level === 0 && this.cryosleeperDiscovered === false) ||
-						(spoiler_level > 0 && this.cryosleeper === false))) ||
+					((spoilerLevel === 0 && this.cryosleeperDiscovered === false) ||
+						(spoilerLevel > 0 && this.cryosleeper === false))) ||
 				(criteria.market.domainRelay &&
-					((spoiler_level === 0 && !this.domainRelayDiscovered) ||
-						(spoiler_level > 0 && !this.domainRelay))) ||
+					((spoilerLevel === 0 && !this.domainRelayDiscovered) ||
+						(spoilerLevel > 0 && !this.domainRelay))) ||
 				(criteria.market.gate &&
-					((spoiler_level === 0 && !this.gateDiscovered) || (spoiler_level > 0 && !this.gate))) ||
+					((spoilerLevel === 0 && !this.gateDiscovered) || (spoilerLevel > 0 && !this.gate))) ||
 				(criteria.market.solar_array && !this.keywords.includes("solar_array")) ||
 				(criteria.market.habitable && !this.keywords.includes("habitable")) ||
 				(criteria.market.decivilized && !this.keywords.includes("decivilized")) ||
@@ -486,7 +484,7 @@ export class Body {
 		for (const structure in criteria.structures) {
 			this.applyStructureEffects(stats, structure, criteria.structures[structure], "late")
 		}
-		const industryCount = Object.keys(criteria.structures).reduce((c, s) => c + INDUSTRIES[s].is_industry * 1, 0)
+		const industryCount = Object.keys(criteria.structures).reduce((c, s) => c + INDUSTRIES[s].isIndustry * 1, 0)
 		const maxIndustries = this.size - 2 + stats.tap_industry
 		if (industryCount > maxIndustries) {
 			stats.stability.add(-5, "Maximum number of industries exceeded")

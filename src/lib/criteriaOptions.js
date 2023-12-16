@@ -3,7 +3,7 @@ import { parse } from "csv-parse/browser/esm/sync"
 import planetGenData from "$lib/gameData/vanilla/planet_gen_data.csv?raw"
 /** @type string */
 import conditionGenData from "$lib/gameData/vanilla/condition_gen_data.csv?raw"
-import { humanReadable } from "$lib/utils.js"
+import { groupBy, humanReadable } from "$lib/utils.js"
 
 const BARREN_NAMES = ["barren", "barren2", "barren3", "barren_castiron", "barren_venuslike"]
 
@@ -77,4 +77,32 @@ export function getConditionOptions() {
 			it.requiresNotAny = it.requiresNotAny !== "" ? it.requiresNotAny.split(", ") : []
 			return it
 		})
+}
+
+let cachedConditions = null
+
+/**
+ * @return {{
+ *     id: string,
+ *     group: string,
+ *     hazard: number,
+ *     order: number,
+ *     rank: number,
+ *     reqSurvey: boolean,
+ *     displayName: string,
+ *     requiresAll: string[],
+ *     requiresAny: string[],
+ *     requiresNotAny: string[],
+ * }[]}
+ */
+export function cachedConds() {
+	if (cachedConditions == null) {
+		const collector = {}
+		const conds = getConditionOptions()
+		for (const cond of conds) {
+			collector[cond.id] = cond
+		}
+		cachedConditions = collector
+	}
+	return cachedConditions
 }

@@ -1,7 +1,8 @@
 <script>
-	import Colonies from "./Colonies.svelte";
+	import Colonies from "./Colonies.svelte"
 	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
 	import { readSaveFile, character } from "$lib/saveReader.js"
+	import { search } from "$lib/Search.js"
 
 	/**
 	 * @type FileList
@@ -9,8 +10,8 @@
 	let saveFile
 	let saveFilePromise
 
-	function search() {
-		console.log($colonyFilterStore)
+	function submit() {
+		search($colonyFilterStore)
 	}
 
 	$: if (saveFile) {
@@ -20,7 +21,7 @@
 
 <svelte:head>
 	<title>AstroSearcher</title>
-	<meta name="description" content="Find the perfect Starsector colony"/>
+	<meta name="description" content="Find the perfect Starsector colony" />
 </svelte:head>
 
 <section>
@@ -28,18 +29,18 @@
 		AstroSearcher
 	</h1>
 
-	<label for="save">Select your save:</label>
-	<input bind:files={saveFile} id="save" type=file />
-	{#await saveFilePromise}
-		<p>Parsing save file...</p>
-	{:then _res}
-		{#if character}
-			<p>Hello, {character.honorific} {character.name}!</p>
-		{/if}
-	{/await}
+	<form autocomplete="off" on:submit|preventDefault={submit}>
 
-	<form on:submit|preventDefault={search}>
-		<Colonies/>
+		<label for="save">Select your save:</label>
+		<input bind:files={saveFile} id="save" type="file" />
+		{#await saveFilePromise}
+			<p>Parsing save file...</p>
+		{:then _res}
+			{#if character}
+				<p>Hello, {character.honorific} {character.name}!</p>
+			{/if}
+		{/await}
+		<Colonies />
 		<button type="submit">Search</button>
 	</form>
 </section>

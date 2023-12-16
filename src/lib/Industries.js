@@ -4,9 +4,9 @@ import { nonneg } from "$lib/utils.js"
 export const INDUSTRIES = {
 	population: {
 		name: "Population & Infrastructure",
-		is_industry: false,
-		improvement_desc: "+1 stability",
-		alpha_desc: "+1 production",
+		isIndustry: false,
+		improvementDesc: "+1 stability",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		demands: (planet, stats, config) => {
 			const ret = {
@@ -69,9 +69,9 @@ export const INDUSTRIES = {
 	},
 	spaceport: {
 		name: "Spaceport",
-		is_industry: false,
-		improvement_desc: "+20% accessibility",
-		alpha_desc: "+20% accessibility",
+		isIndustry: false,
+		improvementDesc: "+20% accessibility",
+		alphaDesc: "+20% accessibility",
 		upkeep: (planet, stats, config) => {
 			const shortages = getShortages(this, planet, stats, config)
 			const penalizer = largestShortage(shortages)
@@ -106,9 +106,9 @@ export const INDUSTRIES = {
 	},
 	megaport: {
 		name: "Megaport",
-		is_industry: false,
-		improvement_desc: "+20% accessibility",
-		alpha_desc: "+20% accessibility",
+		isIndustry: false,
+		improvementDesc: "+20% accessibility",
+		alphaDesc: "+20% accessibility",
 		upkeep: (planet, stats, config) => {
 			const shortages = getShortages(this, planet, stats, config)
 			const penalizer = largestShortage(shortages)
@@ -143,9 +143,9 @@ export const INDUSTRIES = {
 	},
 	waystation: {
 		name: "Waystation",
-		is_industry: false,
-		improvement_desc: "+20% accessibility",
-		alpha_desc: "greatly increases stockpiles",
+		isIndustry: false,
+		improvementDesc: "+20% accessibility",
+		alphaDesc: "greatly increases stockpiles",
 		upkeep: planet => (planet.size - 2) * 2 * 500,
 		demands: planet => ({
 			fuel: planet.size,
@@ -164,9 +164,9 @@ export const INDUSTRIES = {
 	},
 	farming: {
 		name: "Farming",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 1 * 500,
 		demands: planet => ({
 			heavy_machinery: planet.size - 3,
@@ -175,7 +175,7 @@ export const INDUSTRIES = {
 			const shortages = getShortages(this, planet, stats, config)
 			const modifiers =
 				planet.conditions.food +
-				(planet.conditions.solar_food ?? 0) +
+				(planet.conditions.solarFood ?? 0) +
 				(config.soil_nanites ? 2 : 0) +
 				config.improvements * 1 +
 				(config.aicore >= 3 ? 1 : 0) +
@@ -193,9 +193,9 @@ export const INDUSTRIES = {
 	},
 	aquaculture: {
 		name: "Aquaculture",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		demands: planet => ({
 			heavy_machinery: planet.size,
@@ -220,9 +220,9 @@ export const INDUSTRIES = {
 	},
 	mining: {
 		name: "Mining",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 2 * 500,
 		demands: planet => ({
 			heavy_machinery: planet.size - 3,
@@ -273,9 +273,9 @@ export const INDUSTRIES = {
 	},
 	techmining: {
 		name: "Tech-Mining",
-		is_industry: true,
-		improvement_desc: "+25% finds",
-		alpha_desc: "+25% finds",
+		isIndustry: true,
+		improvementDesc: "+25% finds",
+		alphaDesc: "+25% finds",
 		upkeep: planet => {
 			const base_upkeep = (planet.size - 2) * 2 * 500
 			const upkeep_cap = planet.conditions.tech * 1000
@@ -286,9 +286,9 @@ export const INDUSTRIES = {
 	},
 	refining: {
 		name: "Refining",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		demands: planet => ({
 			heavy_machinery: planet.size - 2,
@@ -318,9 +318,9 @@ export const INDUSTRIES = {
 	},
 	lightindustry: {
 		name: "Light Industry",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 8 * 500,
 		demands: planet => ({
 			organics: planet.size,
@@ -351,9 +351,9 @@ export const INDUSTRIES = {
 	},
 	heavyindustry: {
 		name: "Heavy Industry",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 12 * 500,
 		demands: planet => ({
 			metals: planet.size,
@@ -386,9 +386,9 @@ export const INDUSTRIES = {
 	},
 	orbitalworks: {
 		name: "Orbital Works",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 12 * 500,
 		demands: planet => ({
 			metals: planet.size,
@@ -421,9 +421,9 @@ export const INDUSTRIES = {
 	},
 	fuelprod: {
 		name: "Fuel Production",
-		is_industry: true,
-		improvement_desc: "+1 production",
-		alpha_desc: "+1 production",
+		isIndustry: true,
+		improvementDesc: "+1 production",
+		alphaDesc: "+1 production",
 		upkeep: planet => (planet.size - 2) * 10 * 500,
 		demands: planet => ({
 			volatiles: planet.size,
@@ -451,9 +451,9 @@ export const INDUSTRIES = {
 	},
 	commerce: {
 		name: "Commerce",
-		is_industry: true,
-		improvement_desc: "+25% income",
-		alpha_desc: "+25% income",
+		isIndustry: true,
+		improvementDesc: "+25% income",
+		alphaDesc: "+25% income",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		effects: (planet, stats, config) => {
 			const modifiers =
@@ -470,9 +470,9 @@ export const INDUSTRIES = {
 	},
 	orbitalstation: {
 		name: "Orbital Station",
-		is_industry: false,
-		improvement_desc: "+1 stability",
-		alpha_desc: "increases station combat effectiveness",
+		isIndustry: false,
+		improvementDesc: "+1 stability",
+		alphaDesc: "increases station combat effectiveness",
 		upkeep: planet => 1500,
 		demands: planet => ({
 			supplies: planet.size - 3,
@@ -494,9 +494,9 @@ export const INDUSTRIES = {
 	},
 	battlestation: {
 		name: "Battlestation",
-		is_industry: false,
-		improvement_desc: "+1 stability",
-		alpha_desc: "increases station combat effectiveness",
+		isIndustry: false,
+		improvementDesc: "+1 stability",
+		alphaDesc: "increases station combat effectiveness",
 		upkeep: planet => 6000,
 		demands: planet => ({
 			supplies: planet.size - 1,
@@ -518,9 +518,9 @@ export const INDUSTRIES = {
 	},
 	starfortress: {
 		name: "Star Fortress",
-		is_industry: false,
-		improvement_desc: "+1 stability",
-		alpha_desc: "increases station combat effectiveness",
+		isIndustry: false,
+		improvementDesc: "+1 stability",
+		alphaDesc: "increases station combat effectiveness",
 		upkeep: planet => 12500,
 		demands: planet => ({
 			supplies: planet.size + 1,
@@ -544,9 +544,9 @@ export const INDUSTRIES = {
 	},
 	grounddefenses: {
 		name: "Ground Defenses",
-		is_industry: false,
-		improvement_desc: "x1.25 ground defenses",
-		alpha_desc: "x1.5 ground defenses",
+		isIndustry: false,
+		improvementDesc: "x1.25 ground defenses",
+		alphaDesc: "x1.5 ground defenses",
 		upkeep: planet => (planet.size - 2) * 2 * 500,
 		demands: planet => ({
 			supplies: planet.size,
@@ -572,9 +572,9 @@ export const INDUSTRIES = {
 	},
 	heavybatteries: {
 		name: "Heavy Batteries",
-		is_industry: false,
-		improvement_desc: "x1.25 ground defenses",
-		alpha_desc: "x1.5 ground defenses",
+		isIndustry: false,
+		improvementDesc: "x1.25 ground defenses",
+		alphaDesc: "x1.5 ground defenses",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		demands: planet => ({
 			supplies: planet.size,
@@ -600,9 +600,9 @@ export const INDUSTRIES = {
 	},
 	patrolhq: {
 		name: "Patrol HQ",
-		is_industry: false,
-		improvement_desc: "+1 medium patrol",
-		alpha_desc: "x1.25 fleet size",
+		isIndustry: false,
+		improvementDesc: "+1 medium patrol",
+		alphaDesc: "x1.25 fleet size",
 		upkeep: planet => 4000,
 		demands: planet => ({
 			fuel: planet.size - 1,
@@ -645,9 +645,9 @@ export const INDUSTRIES = {
 	},
 	militarybase: {
 		name: "Military Base",
-		is_industry: true,
-		improvement_desc: "+1 heavy patrol",
-		alpha_desc: "x1.25 fleet size",
+		isIndustry: true,
+		improvementDesc: "+1 heavy patrol",
+		alphaDesc: "x1.25 fleet size",
 		upkeep: planet => (planet.size - 2) * 10 * 500,
 		demands: planet => ({
 			fuel: planet.size + 1,
@@ -691,9 +691,9 @@ export const INDUSTRIES = {
 	},
 	highcommand: {
 		name: "High Command",
-		is_industry: true,
-		improvement_desc: "+1 heavy patrol",
-		alpha_desc: "x1.25 fleet size",
+		isIndustry: true,
+		improvementDesc: "+1 heavy patrol",
+		alphaDesc: "x1.25 fleet size",
 		upkeep: planet => (planet.size - 2) * 14 * 500,
 		demands: planet => ({
 			fuel: planet.size + 2,
@@ -737,9 +737,9 @@ export const INDUSTRIES = {
 	},
 	planetaryshield: {
 		name: "Planetary Shield",
-		is_industry: false,
-		improvement_desc: "x1.25 ground defenses",
-		alpha_desc: "x1.5 ground defenses",
+		isIndustry: false,
+		improvementDesc: "x1.25 ground defenses",
+		alphaDesc: "x1.5 ground defenses",
 		upkeep: planet => (planet.size - 2) * 3 * 500,
 		effects: (planet, stats, config) => {
 			if (config.aicore >= 3) stats.ground_forces.mul(1.5, `Alpha core (${this.name})`)
@@ -754,9 +754,9 @@ export const INDUSTRIES = {
 	},
 	cryorevival: {
 		name: "Cryorevival Facility",
-		is_industry: false,
-		improvement_desc: "x2 population growth bonus",
-		alpha_desc: "x2 population growth bonus",
+		isIndustry: false,
+		improvementDesc: "x2 population growth bonus",
+		alphaDesc: "x2 population growth bonus",
 		upkeep: planet => (planet.size - 2) * 5 * 500,
 		demands: planet => ({
 			organics: 10,

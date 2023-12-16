@@ -9,11 +9,11 @@
 	export let index
 
 	/**
-	 * @type {ColonyFilter} colony
+	 * @type Colony
 	 */
 	const colony = {
 		planetTypeDisplayNames: new Set(),
-		conditions: new Set(),
+		conditions: { exact: new Map(), gte: new Map() },
 		resources: new Set(),
 		buildings: new Set(),
 		hasGate: false,
@@ -34,6 +34,25 @@
 		}
 	}
 
+	// I can't find a more dynamic way of doing this.
+	const gteGroups = new Set(["ore", "rare_ore", "volatiles", "organics", "farmland", "ruins"])
+
+	function updateConditions(group, id) {
+		if (`${group}_any` === id) {
+			if (gteGroups.has(group)) {
+				colony.conditions.gte.delete(group)
+			} else {
+				colony.conditions.exact.delete(group)
+			}
+		} else {
+			if (gteGroups.has(group)) {
+				colony.conditions.gte.set(group, id)
+			} else {
+				colony.conditions.exact.set(group, id)
+			}
+		}
+	}
+
 	const planetOptions = getPlanetOptions()
 	const conditionOptions = getConditionOptions()
 
@@ -47,8 +66,6 @@
 			return it
 		})
 		.sort((a, b) => a[1].length - b[1].length) // sort ascending
-
-	console.log(conditionOptionsGroupedByCategory)
 </script>
 
 <div>
@@ -62,19 +79,14 @@
 			</div>
 		{/each}
 	</fieldset>
-	<p>
-		The "Any ... Condition" will match any condition. This is the same as not making a selection at all.
-	</p>
-	<p>
-		The "No ... Condition" will match planets that do not have any of the conditions in that group.
-	</p>
 	<div class="condition-options-wrapper">
-		{#each conditionOptionsGroupedByCategory as [group, conditionOptions]}
+		{#each conditionOptionsGroupedByCategory as [group, conditionOptions] (group)}
 			<fieldset>
 				<legend>{humanReadable(group)}</legend>
 				{#each conditionOptions as conditionOption}
 					<div>
-						<input type="radio" id="{`${index}-${conditionOption.id}`}">
+						<input type="radio" name={group} id="{`${index}-${conditionOption.id}`}"
+							   on:change={_e => updateConditions(group, conditionOption.id)}>
 						<label for="{`${index}-${conditionOption.id}`}">{conditionOption.displayName}</label>
 					</div>
 				{/each}

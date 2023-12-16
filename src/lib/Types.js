@@ -15,3 +15,13 @@ import { Body } from "$lib/Body.js"
  * @property {boolean} [cryosleeper]
  * @property {boolean} [cryosleeperDiscovered]
  */
+
+/**
+ * @typedef Colony
+ * @property {Set} planetTypeDisplayNames
+ * @property {{exact: Map, gte: Map}} conditions
+ * @property {Set} resources
+ * @property {Set} buildings
+ * @property {boolean} hasGate
+ * @property {boolean} hasRelay
+ */
