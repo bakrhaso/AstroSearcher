@@ -1,8 +1,5 @@
 import { Body } from "$lib/Body.js"
 
-/**
- * @type {CharData}
- */
 export let character
 
 export let coords
@@ -66,6 +63,7 @@ export async function readSaveFile(saveFile) {
 	getCommRelays()
 	getGates()
 	getFleetDoctrines()
+	getCharacter()
 
 	const end = performance.now()
 	console.log(`it took ${(end - start) / 1000} seconds`)
@@ -359,11 +357,18 @@ function getGates() {
 }
 
 function getFleetDoctrines() {
-	const playerFactionTag = derefNode(xml.getElementsByTagName('playerFaction')[0]);
-	const doctrineTag = getNamedChild(playerFactionTag, 'doctrine');
+	const playerFactionTag = derefNode(xml.getElementsByTagName("playerFaction")[0])
+	const doctrineTag = getNamedChild(playerFactionTag, "doctrine")
 
-	fleetSizeDoctrine = Number(getNamedChild(doctrineTag, 'numShips').textContent);
-	fleetQualityDoctrine = Number(getNamedChild(doctrineTag, 'shipQuality').textContent);
+	fleetSizeDoctrine = Number(getNamedChild(doctrineTag, "numShips").textContent)
+	fleetQualityDoctrine = Number(getNamedChild(doctrineTag, "shipQuality").textContent)
+}
+
+function getCharacter() {
+	const characterData = getNamedChild(xml.children[0], "characterData")
+	const name = getNamedChild(characterData, "name").textContent
+	const honorific = getNamedChild(characterData, "honorific").textContent
+	character = { name, honorific }
 }
 
 /**
