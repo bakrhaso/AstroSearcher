@@ -224,6 +224,10 @@ export class Body {
 			if (!match) return false
 		}
 
+		const planetTypeMatch = criteria.planetTypes.has(this.type)
+		if (!planetTypeMatch) return false
+
+		return true
 		const needs = criteria.structures
 		return (
 			!(
@@ -253,81 +257,7 @@ export class Body {
 						(spoilerLevel > 0 && !this.domainRelay))) ||
 				(criteria.market.gate &&
 					((spoilerLevel === 0 && !this.gateDiscovered) || (spoilerLevel > 0 && !this.gate))) ||
-				(criteria.market.solar_array && !this.keywords.includes("solar_array")) ||
-				(criteria.market.habitable && !this.keywords.includes("habitable")) ||
-				(criteria.market.decivilized && !this.keywords.includes("decivilized")) ||
-				(criteria.market.cold && !this.keywords.includes("cold")) ||
-				(criteria.market.very_cold && !this.keywords.includes("very_cold")) ||
-				(criteria.market.hot && !this.keywords.includes("hot")) ||
-				(criteria.market.very_hot && !this.keywords.includes("very_hot")) ||
-				(criteria.market.tectonic_activity && !this.keywords.includes("tectonic_activity")) ||
-				(criteria.market.extreme_tectonic_activity && !this.keywords.includes("extreme_tectonic_activity")) ||
-				(criteria.market.no_atmosphere && !this.keywords.includes("no_atmosphere")) ||
-				(criteria.market.thin_atmosphere && !this.keywords.includes("thin_atmosphere")) ||
-				(criteria.market.toxic_atmosphere && !this.keywords.includes("toxic_atmosphere")) ||
-				(criteria.market.dense_atmosphere && !this.keywords.includes("dense_atmosphere")) ||
-				(criteria.market.mild_climate && !this.keywords.includes("mild_climate")) ||
-				(criteria.market.extreme_weather && !this.keywords.includes("extreme_weather")) ||
-				(criteria.market.low_gravity && !this.keywords.includes("low_gravity")) ||
-				(criteria.market.high_gravity && !this.keywords.includes("high_gravity")) ||
-				(criteria.market.irradiated && !this.keywords.includes("irradiated")) ||
-				(criteria.market.inimical_biosphere && !this.keywords.includes("inimical_biosphere")) ||
-				(criteria.market.water_surface && !this.keywords.includes("water_surface")) ||
-				(criteria.market.poor_light && !this.keywords.includes("poor_light")) ||
-				(criteria.market.dark && !this.keywords.includes("dark")) ||
-				(criteria.market.meteor_impacts && !this.keywords.includes("meteor_impacts")) ||
-				(criteria.market.pollution && !this.keywords.includes("pollution")) ||
-				(!(
-					!criteria.market.type_arid &&
-					!criteria.market.type_barren &&
-					!criteria.market.type_barren_bombarded &&
-					!criteria.market.type_barren_desert &&
-					!criteria.market.type_cryovolcanic &&
-					!criteria.market.type_desert &&
-					!criteria.market.type_frozen &&
-					!criteria.market.type_gas_giant &&
-					!criteria.market.type_ice_giant &&
-					!criteria.market.type_irradiated &&
-					!criteria.market.type_jungle &&
-					!criteria.market.type_rocky_ice &&
-					!criteria.market.type_rocky_metallic &&
-					!criteria.market.type_rocky_unstable &&
-					!criteria.market.type_terran &&
-					!criteria.market.type_terran_eccentric &&
-					!criteria.market.type_toxic &&
-					!criteria.market.type_tundra &&
-					!criteria.market.type_volcanic &&
-					!criteria.market.type_water
-				) &&
-					((!criteria.market.type_arid && this.type === "arid") ||
-						(!criteria.market.type_barren &&
-							(this.type === "barren" ||
-								this.type === "barren2" ||
-								this.type === "barren3" ||
-								this.type === "barren_castiron" ||
-								this.type === "barren_venuslike")) ||
-						(!criteria.market.type_barren_bombarded && this.type === "barren-bombarded") ||
-						(!criteria.market.type_barren_desert && this.type === "barren-desert") ||
-						(!criteria.market.type_cryovolcanic && this.type === "cryovolcanic") ||
-						(!criteria.market.type_desert && (this.type === "desert" || this.type === "desert1")) ||
-						(!criteria.market.type_frozen &&
-							(this.type === "frozen" ||
-								this.type === "frozen1" ||
-								this.type === "frozen2" ||
-								this.type === "frozen3")) ||
-						(!criteria.market.type_gas_giant && this.type === "gas_giant") ||
-						(!criteria.market.type_ice_giant && this.type === "ice_giant") ||
-						(!criteria.market.type_irradiated && this.type === "irradiated") ||
-						(!criteria.market.type_jungle && this.type === "jungle") ||
-						(!criteria.market.type_rocky_ice && this.type === "rocky_ice") ||
-						(!criteria.market.type_rocky_metallic && this.type === "rocky_metallic") ||
-						(!criteria.market.type_rocky_unstable && this.type === "rocky_unstable") ||
-						(!criteria.market.type_terran && this.type === "terran") ||
-						(!criteria.market.type_terran_eccentric && this.type === "terran-eccentric") ||
-						(!criteria.market.type_toxic && (this.type === "toxic" || this.type === "toxic_cold")) ||
-						(!criteria.market.type_tundra && this.type === "tundra") ||
-						(!criteria.market.type_volcanic && (this.type === "lava_minor" || this.type === "lava")) ||
-						(!criteria.market.type_water && this.type === "water")))
+				(criteria.market.solar_array && !this.keywords.includes("solar_array"))
 			)
 		)
 	}

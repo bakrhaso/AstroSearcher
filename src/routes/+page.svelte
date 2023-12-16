@@ -3,6 +3,7 @@
 	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
 	import { readSaveFile, character } from "$lib/saveReader.js"
 	import { search } from "$lib/Search.js"
+	import { Button } from "flowbite-svelte"
 
 	/**
 	 * @type FileList
@@ -41,20 +42,6 @@
 			{/if}
 		{/await}
 		<Colonies />
-		<button type="submit">Search</button>
+		<Button type="submit">Search</Button>
 	</form>
 </section>
-
-<style>
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
-	}
-
-	h1 {
-		width: 100%;
-	}
-</style>

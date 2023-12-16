@@ -1,5 +1,6 @@
 <script>
-	import "./styles.css";
+	import "../app.pcss"
+	import "./styles.css"
 </script>
 
 <div class="app">
@@ -7,28 +8,3 @@
 		<slot />
 	</main>
 </div>
-
-<style>
-	.app {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh;
-	}
-
-	@media (max-width: 1200px) {
-		main {
-			min-width: 92%;
-		}
-	}
-
-	main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		width: 100%;
-		max-width: 70%;
-		margin: 0 auto;
-		box-sizing: border-box;
-	}
-</style>

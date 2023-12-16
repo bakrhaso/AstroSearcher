@@ -18,7 +18,7 @@ import { Body } from "$lib/Body.js"
 
 /**
  * @typedef Colony
- * @property {Set} planetTypeDisplayNames
+ * @property {Set<string>} planetTypes
  * @property {{exact: Map, gte: Map}} conditions
  * @property {Set} resources
  * @property {Set} buildings

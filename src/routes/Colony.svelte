@@ -2,17 +2,20 @@
 	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
 	import { groupBy, stringComparator, humanReadable } from "$lib/utils.js"
 	import { getConditionOptions, getPlanetOptions } from "$lib/criteriaOptions.js"
+	import { Accordion, AccordionItem } from "flowbite-svelte"
 
 	/**
 	 * @type number
 	 */
 	export let index
 
+	const accordionItems = [];
+
 	/**
 	 * @type Colony
 	 */
 	const colony = {
-		planetTypeDisplayNames: new Set(),
+		planetTypes: new Set(),
 		conditions: { exact: new Map(), gte: new Map() },
 		resources: new Set(),
 		buildings: new Set(),
@@ -28,9 +31,9 @@
 	 */
 	function updatePlanetType(checked, typeIds) {
 		if (checked === true) {
-			typeIds.forEach(it => colony.planetTypeDisplayNames.add(it))
+			typeIds.forEach(it => colony.planetTypes.add(it))
 		} else {
-			typeIds.forEach(it => colony.planetTypeDisplayNames.delete(it))
+			typeIds.forEach(it => colony.planetTypes.delete(it))
 		}
 	}
 
@@ -69,30 +72,41 @@
 </script>
 
 <div>
-	<fieldset class="planet-type-fieldset">
-		<legend>Planet types (matches all selected)</legend>
-		{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
-			<div>
-				<input type="checkbox" id={`${index}-${displayName}`}
-					   on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
-				<label for={`${index}-${displayName}`}>{displayName}</label>
-			</div>
-		{/each}
-	</fieldset>
-	<div class="condition-options-wrapper">
-		{#each conditionOptionsGroupedByCategory as [group, conditionOptions] (group)}
-			<fieldset>
-				<legend>{humanReadable(group)}</legend>
-				{#each conditionOptions as conditionOption}
+	<Accordion multiple>
+		<AccordionItem bind:open={accordionItems[0]}>
+			<span slot="header">Planet types</span>
+			<fieldset class="planet-type-fieldset">
+				<legend>Matches all selected</legend>
+				{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
 					<div>
-						<input type="radio" name={group} id="{`${index}-${conditionOption.id}`}"
-							   on:change={_e => updateConditions(group, conditionOption.id)}>
-						<label for="{`${index}-${conditionOption.id}`}">{conditionOption.displayName}</label>
+						<input type="checkbox" id={`${index}-${displayName}`}
+							   on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
+						<label for={`${index}-${displayName}`}>{displayName}</label>
 					</div>
 				{/each}
 			</fieldset>
-		{/each}
-	</div>
+		</AccordionItem>
+		<AccordionItem bind:open={accordionItems[1]}>
+			<div slot="header">Conditions & Resources</div>
+			<p>The "Any ... Condition" will match any condition. This is the same as not making a selection at all.</p>
+			<p>The "No ... Condition" will match planets that do not have any of the conditions in that group.</p>
+			<p>Resources (ore, farmland, etc.) will match the selected option or better.</p>
+			<div class="condition-options-wrapper">
+				{#each conditionOptionsGroupedByCategory as [group, conditionOptions] (group)}
+					<fieldset>
+						<legend>{humanReadable(group)}</legend>
+						{#each conditionOptions as conditionOption}
+							<div>
+								<input type="radio" name={group} id="{`${index}-${conditionOption.id}`}"
+									   on:change={_e => updateConditions(group, conditionOption.id)}>
+								<label for="{`${index}-${conditionOption.id}`}">{conditionOption.displayName}</label>
+							</div>
+						{/each}
+					</fieldset>
+				{/each}
+			</div>
+		</AccordionItem>
+	</Accordion>
 </div>
 
 <style>
