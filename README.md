@@ -4,7 +4,7 @@ Data files from mods can be found in the same location as in the vanilla game, b
 it would for example be mods/DIYPlanets/data/campaign/procgen.
 
 - planet_gen_data.csv can be found in data/campaign/procgen.
-- condition_gen_data.csv can be found in data/campaign/procgen. I use the `_no_pick`-suffixed entires to match NOT having a resource.
+- condition_gen_data.csv can be found in data/campaign/procgen. I ignore `_no_pick`-suffixed entries.
 
 An example save file (campaign.xml) can be found in devData, this save file also has several mods in it including Nexerelin, Industrial.Evolution, and DIY Planets.
 

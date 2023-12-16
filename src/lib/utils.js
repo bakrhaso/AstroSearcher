@@ -7,7 +7,7 @@
 export function groupBy(arr, keyFun) {
 	return arr.reduce((accumulated, current) => {
 		const key = keyFun(current)
-		accumulated[key] == null ? accumulated[key] = [current] : accumulated[key].push(current)
+		accumulated[key] == null ? (accumulated[key] = [current]) : accumulated[key].push(current)
 		return accumulated
 	}, {})
 }
@@ -31,4 +31,12 @@ export function stringComparator(a, b, order = "ASC") {
 
 export function nonneg(num) {
 	return num < 0 ? 0 : num
+}
+
+export function humanReadable(str) {
+	return str
+		.split("-")
+		.flatMap(it => it.split("_"))
+		.map(it => it.charAt(0).toUpperCase() + it.slice(1))
+		.join(" ")
 }
