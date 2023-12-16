@@ -232,29 +232,29 @@ export class Body {
 				(needs.techmining && !this.conditions.techmining) ||
 				(needs.farmingaquaculture && !(this.conditions.farming || this.conditions.aquaculture)) ||
 				(needs.mining && !this.conditions.mining) ||
-				(needs.population?.coronal_portal &&
+				(needs.population?.coronalPortal &&
 					((spoiler_level === 0 && this.coronalTapDiscovered === false) ||
 						(spoiler_level > 0 && this.coronalTap === false))) ||
-				((needs.spaceport?.fullerene_spool || needs.megaport?.fullerene_spool) &&
-					!this.possible_artifacts.fullerene_spool) ||
-				(needs.farmingaquaculture?.soil_nanites && !this.possible_artifacts.soil_nanites) ||
-				(needs.mining?.mantle_bore && !this.possible_artifacts.mantle_bore) ||
-				(needs.mining?.plasma_dynamo && !this.possible_artifacts.plasma_dynamo) ||
-				(needs.refining?.catalytic_core && !this.possible_artifacts.catalytic_core) ||
-				(needs.lightindustry?.biofactory_embryo && !this.possible_artifacts.biofactory_embryo) ||
-				(needs.fuelprod?.synchrotron && !this.possible_artifacts.synchrotron) ||
-				(!this.possible_artifacts.cryoarithmetic_engine &&
-					(needs.patrolhq?.cryoarithmetic_engine ||
-						needs.militarybase?.cryoarithmetic_engine ||
-						needs.highcommand?.cryoarithmetic_engine)) ||
+				((needs.spaceport?.fullereneSpool || needs.megaport?.fullereneSpool) &&
+					!this.possibleArtifacts.fullereneSpool) ||
+				(needs.farmingaquaculture?.soilNanites && !this.possibleArtifacts.soilNanites) ||
+				(needs.mining?.mantleBore && !this.possibleArtifacts.mantleBore) ||
+				(needs.mining?.plasmaDynamo && !this.possibleArtifacts.plasmaDynamo) ||
+				(needs.refining?.catalyticCore && !this.possibleArtifacts.catalyticCore) ||
+				(needs.lightindustry?.biofactoryEmbryo && !this.possibleArtifacts.biofactoryEmbryo) ||
+				(needs.fuelprod?.synchrotron && !this.possibleArtifacts.synchrotron) ||
+				(!this.possibleArtifacts.cryoarithmeticEngine &&
+					(needs.patrolhq?.cryoarithmeticEngine ||
+						needs.militarybase?.cryoarithmeticEngine ||
+						needs.highcommand?.cryoarithmeticEngine)) ||
 				(needs.cryorevival &&
 					((spoiler_level === 0 && this.cryosleeperDiscovered === false) ||
 						(spoiler_level > 0 && this.cryosleeper === false))) ||
-				(criteria.market.domain_relay &&
-					((spoiler_level === 0 && !this.domain_relay_discovered) ||
-						(spoiler_level > 0 && !this.domain_relay))) ||
+				(criteria.market.domainRelay &&
+					((spoiler_level === 0 && !this.domainRelayDiscovered) ||
+						(spoiler_level > 0 && !this.domainRelay))) ||
 				(criteria.market.gate &&
-					((spoiler_level === 0 && !this.gate_discovered) || (spoiler_level > 0 && !this.gate))) ||
+					((spoiler_level === 0 && !this.gateDiscovered) || (spoiler_level > 0 && !this.gate))) ||
 				(criteria.market.solar_array && !this.keywords.includes("solar_array")) ||
 				(criteria.market.habitable && !this.keywords.includes("habitable")) ||
 				(criteria.market.decivilized && !this.keywords.includes("decivilized")) ||
@@ -434,24 +434,26 @@ export class Body {
 		let availabilityChanged = false
 		for (const structure in criteria.structures) {
 			const config = criteria.structures[structure]
-			if ("products" in INDUSTRIES[structure]) {
-				const struct_prod = INDUSTRIES[structure].products(
-					this,
-					stats,
-					config,
-					criteria.market.industrial_planning,
-				)
-				for (const commodity in struct_prod) {
-					const produced = struct_prod[commodity]
-					if (produced > (stats.products[commodity] ?? 0)) {
-						stats.products[commodity] = produced
-						availabilityChanged = true
-					}
-					const exportable = Math.min(produced, infactionCap)
-					if (exportable > (infaction_supply[commodity] ?? 0)) {
-						infaction_supply[commodity] = exportable
-						availabilityChanged = true
-					}
+			if (!("products" in INDUSTRIES[structure])) {
+				continue
+			}
+
+			const struct_prod = INDUSTRIES[structure].products(
+				this,
+				stats,
+				config,
+				criteria.market.industrial_planning,
+			)
+			for (const commodity in struct_prod) {
+				const produced = struct_prod[commodity]
+				if (produced > (stats.products[commodity] ?? 0)) {
+					stats.products[commodity] = produced
+					availabilityChanged = true
+				}
+				const exportable = Math.min(produced, infactionCap)
+				if (exportable > (infaction_supply[commodity] ?? 0)) {
+					infaction_supply[commodity] = exportable
+					availabilityChanged = true
 				}
 			}
 		}
@@ -463,7 +465,7 @@ export class Body {
 			stats.stability.add(-3, "Free port")
 			stats.growth += 10
 		}
-		if ((spoilerLevel === 0 && this.domain_relay_discovered) || (spoilerLevel > 0 && this.domain_relay)) {
+		if ((spoilerLevel === 0 && this.domainRelayDiscovered) || (spoilerLevel > 0 && this.domainRelay)) {
 			stats.stability.add(2, "Comm relay")
 		} else {
 			stats.stability.add(1, "Makeshift comm relay")
