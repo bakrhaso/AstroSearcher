@@ -2,7 +2,7 @@
 	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
 	import { groupBy, humanReadable, stringComparator } from "$lib/utils.js"
 	import { getConditionOptions, getPlanetOptions } from "$lib/criteriaOptions.js"
-	import { Accordion, AccordionItem, Radio, RadioButton } from "flowbite-svelte"
+	import { Accordion, AccordionItem, Checkbox, Radio } from "flowbite-svelte"
 
 	/**
 	 * @type number
@@ -35,11 +35,10 @@
 		}
 	}
 
-	// I can't find a more dynamic way of doing this.
+	// I can't find a more dynamic way of doing this. TODO Should probably be a property on the groups instead?
 	const gteGroups = new Set(["ore", "rare_ore", "volatiles", "organics", "farmland", "ruins"])
 
-	function updateConditions(e, group, id) {
-		// console.log(e)
+	function updateConditions(group, id) {
 		if (gteGroups.has(group)) {
 			colony.conditions.gte.set(group, id)
 		} else {
@@ -56,32 +55,33 @@
 	const conditionOptionsGrouped = Object.entries(groupBy(conditionOptions, it => it.group))
 		.map(it => {
 			const none = { id: `${it[0]}_none`, group: it[0], displayName: `None` }
-			const any = { id: `${it[0]}_any`, group: it[0], displayName: `Any`}
+			const any = { id: `${it[0]}_any`, group: it[0], displayName: `Any` }
+
+			updateConditions(any.group, any.id)
 
 			return { group: it[0], selected: `${it[0]}_any`, any, none, options: it[1] }
 		})
-		.sort((a, b) => a.options.length - b.options.length) // sort ascending
+		.sort((a, b) => a.options.length - b.options.length) // sort ascending, just looks a bit nicer IMO
 </script>
 
 <div>
 	<Accordion multiple>
-		<!--		copy pasted the default classes from https://flowbite-svelte.com/docs/components/accordion#AccordionItem_styling-->
-		<!--		but removed rounded corners-->
-		<AccordionItem
-			defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700">
+		<!--		defaultClass was copy-pasted from https://flowbite-svelte.com/docs/components/accordion#AccordionItem_styling -->
+		<!--		but removed rounded corners -->
+		<AccordionItem open class="p-2 ps-5 pe-5"
+					   defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700 p-2">
 			<span slot="header">Planet types</span>
 			<fieldset class="grid grid-cols-4">
 				<legend>Matches all selected</legend>
 				{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
-					<div>
-						<input type="checkbox" bind:checked={planetOptions.checked} id={`${index}-${displayName}`}
-							   on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
-						<label for={`${index}-${displayName}`}>{displayName}</label>
-					</div>
+					<Checkbox id={`${index}-${displayName}`}
+							  on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
+						{displayName}
+					</Checkbox>
 				{/each}
 			</fieldset>
 		</AccordionItem>
-		<AccordionItem open>
+		<AccordionItem open class="p-2 ps-5 pe-5">
 			<div slot="header">Conditions & Resources</div>
 			<div class="grid grid-cols-4 gap-2">
 				{#each conditionOptionsGrouped as conditionOptionsGroup}
@@ -89,24 +89,22 @@
 						<legend>{humanReadable(conditionOptionsGroup.group)}</legend>
 						<div class="ps-1 last:pb-1 flex gap-3">
 							<Radio bind:group={conditionOptionsGroup.selected}
-										 name={conditionOptionsGroup.group} value={conditionOptionsGroup.any.id}
-										 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOptionsGroup.any.id)}>
+								   name={conditionOptionsGroup.group} value={conditionOptionsGroup.any.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.any.id)}>
 								{conditionOptionsGroup.any.displayName}
 							</Radio>
 							<Radio bind:group={conditionOptionsGroup.selected}
-										 name={conditionOptionsGroup.group} value={conditionOptionsGroup.none.id}
-										 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOptionsGroup.none.id)}>
+								   name={conditionOptionsGroup.group} value={conditionOptionsGroup.none.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.none.id)}>
 								{conditionOptionsGroup.none.displayName}
 							</Radio>
 						</div>
 						{#each conditionOptionsGroup.options as conditionOption}
-							<div class="ps-1 last:pb-1">
-								<Radio bind:group={conditionOptionsGroup.selected}
-											 name={conditionOptionsGroup.group} value={conditionOption.id}
-											 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOption.id)}>
-									{conditionOption.displayName}
-								</Radio>
-							</div>
+							<Radio bind:group={conditionOptionsGroup.selected} class="ps-1 last:pb-1"
+								   name={conditionOptionsGroup.group} value={conditionOption.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOption.id)}>
+								{conditionOption.displayName}
+							</Radio>
 						{/each}
 					</fieldset>
 				{/each}
