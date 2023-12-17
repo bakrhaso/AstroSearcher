@@ -72,8 +72,7 @@
 		<AccordionItem open class="p-2 ps-5 pe-5"
 					   defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700 p-2">
 			<span slot="header">Planet types</span>
-			<fieldset class="grid grid-cols-4 text-neutral-50 border-neutral-500">
-				<legend>Matches all selected</legend>
+			<fieldset class="grid grid-cols-4">
 				{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
 					<Checkbox id={`${index}-${displayName}`}
 							  on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
