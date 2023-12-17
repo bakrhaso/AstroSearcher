@@ -1,15 +1,13 @@
 <script>
 	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
-	import { groupBy, stringComparator, humanReadable } from "$lib/utils.js"
+	import { groupBy, humanReadable, stringComparator } from "$lib/utils.js"
 	import { getConditionOptions, getPlanetOptions } from "$lib/criteriaOptions.js"
-	import { Accordion, AccordionItem } from "flowbite-svelte"
+	import { Accordion, AccordionItem, Radio, RadioButton } from "flowbite-svelte"
 
 	/**
 	 * @type number
 	 */
 	export let index
-
-	const accordionItems = [];
 
 	/**
 	 * @type Colony
@@ -40,19 +38,12 @@
 	// I can't find a more dynamic way of doing this.
 	const gteGroups = new Set(["ore", "rare_ore", "volatiles", "organics", "farmland", "ruins"])
 
-	function updateConditions(group, id) {
-		if (`${group}_any` === id) {
-			if (gteGroups.has(group)) {
-				colony.conditions.gte.delete(group)
-			} else {
-				colony.conditions.exact.delete(group)
-			}
+	function updateConditions(e, group, id) {
+		// console.log(e)
+		if (gteGroups.has(group)) {
+			colony.conditions.gte.set(group, id)
 		} else {
-			if (gteGroups.has(group)) {
-				colony.conditions.gte.set(group, id)
-			} else {
-				colony.conditions.exact.set(group, id)
-			}
+			colony.conditions.exact.set(group, id)
 		}
 	}
 
@@ -62,44 +53,59 @@
 	const planetOptionsGroupedByDisplayName = Object.entries(groupBy(planetOptions, it => it.displayName))
 		.sort((a, b) => stringComparator(a[0], b[0])) // sort alphabetically
 
-	const conditionOptionsGroupedByCategory = Object.entries(groupBy(conditionOptions, it => it.group))
+	const conditionOptionsGrouped = Object.entries(groupBy(conditionOptions, it => it.group))
 		.map(it => {
-			it[1].unshift({ id: `${it[0]}_any`, group: it[0], displayName: `Any ${humanReadable(it[0])} Condition` })
-			it[1].push({ id: `${it[0]}_none`, group: it[0], displayName: `No ${humanReadable(it[0])} Condition` })
-			return it
+			const none = { id: `${it[0]}_none`, group: it[0], displayName: `None` }
+			const any = { id: `${it[0]}_any`, group: it[0], displayName: `Any`}
+
+			return { group: it[0], selected: `${it[0]}_any`, any, none, options: it[1] }
 		})
-		.sort((a, b) => a[1].length - b[1].length) // sort ascending
+		.sort((a, b) => a.options.length - b.options.length) // sort ascending
 </script>
 
 <div>
 	<Accordion multiple>
-		<AccordionItem bind:open={accordionItems[0]}>
+		<!--		copy pasted the default classes from https://flowbite-svelte.com/docs/components/accordion#AccordionItem_styling-->
+		<!--		but removed rounded corners-->
+		<AccordionItem
+			defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700">
 			<span slot="header">Planet types</span>
-			<fieldset class="planet-type-fieldset">
+			<fieldset class="grid grid-cols-4">
 				<legend>Matches all selected</legend>
 				{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
 					<div>
-						<input type="checkbox" id={`${index}-${displayName}`}
+						<input type="checkbox" bind:checked={planetOptions.checked} id={`${index}-${displayName}`}
 							   on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
 						<label for={`${index}-${displayName}`}>{displayName}</label>
 					</div>
 				{/each}
 			</fieldset>
 		</AccordionItem>
-		<AccordionItem bind:open={accordionItems[1]}>
+		<AccordionItem open>
 			<div slot="header">Conditions & Resources</div>
-			<p>The "Any ... Condition" will match any condition. This is the same as not making a selection at all.</p>
-			<p>The "No ... Condition" will match planets that do not have any of the conditions in that group.</p>
-			<p>Resources (ore, farmland, etc.) will match the selected option or better.</p>
-			<div class="condition-options-wrapper">
-				{#each conditionOptionsGroupedByCategory as [group, conditionOptions] (group)}
-					<fieldset>
-						<legend>{humanReadable(group)}</legend>
-						{#each conditionOptions as conditionOption}
-							<div>
-								<input type="radio" name={group} id="{`${index}-${conditionOption.id}`}"
-									   on:change={_e => updateConditions(group, conditionOption.id)}>
-								<label for="{`${index}-${conditionOption.id}`}">{conditionOption.displayName}</label>
+			<div class="grid grid-cols-4 gap-2">
+				{#each conditionOptionsGrouped as conditionOptionsGroup}
+					<fieldset class="border text-neutral-50 border-neutral-500">
+						<legend>{humanReadable(conditionOptionsGroup.group)}</legend>
+						<div class="ps-1 last:pb-1 flex gap-3">
+							<Radio bind:group={conditionOptionsGroup.selected}
+										 name={conditionOptionsGroup.group} value={conditionOptionsGroup.any.id}
+										 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOptionsGroup.any.id)}>
+								{conditionOptionsGroup.any.displayName}
+							</Radio>
+							<Radio bind:group={conditionOptionsGroup.selected}
+										 name={conditionOptionsGroup.group} value={conditionOptionsGroup.none.id}
+										 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOptionsGroup.none.id)}>
+								{conditionOptionsGroup.none.displayName}
+							</Radio>
+						</div>
+						{#each conditionOptionsGroup.options as conditionOption}
+							<div class="ps-1 last:pb-1">
+								<Radio bind:group={conditionOptionsGroup.selected}
+											 name={conditionOptionsGroup.group} value={conditionOption.id}
+											 on:change={e => updateConditions(e, conditionOptionsGroup.group, conditionOption.id)}>
+									{conditionOption.displayName}
+								</Radio>
 							</div>
 						{/each}
 					</fieldset>
@@ -108,15 +114,3 @@
 		</AccordionItem>
 	</Accordion>
 </div>
-
-<style>
-	.planet-type-fieldset {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr;
-	}
-
-	.condition-options-wrapper {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-	}
-</style>
