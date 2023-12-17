@@ -212,53 +212,67 @@ export class Body {
 	 * @return {boolean}
 	 */
 	prefilterStructures(criteria, spoilerLevel = 0) {
+		const planetTypeMatch = criteria.planetTypes.has(this.type)
+		if (!planetTypeMatch) return false
+
 		// key = group (ruins), value = amount (ruins_widespread)
 		for (const [key, value] of criteria.conditions.gte.entries()) {
-			if (this.conditionGroups[key] == null) return false
+			if (value === `${key}_any`) continue // any = we don't care about this
+
+			const wantNone = value === `${key}_none`
+			if (wantNone) {
+				if (this.conditionGroups[key] != null) return false
+				continue // continue the loop, none/null is what we want and if we don't continue we crash from NPE
+			} else {
+				if (this.conditionGroups[key] == null) return false
+			}
+
 			const match = this.conditionGroups[key].rank >= cachedConds()[value].rank
 			if (!match) return false
 		}
 
-		for (const [_key, value] of criteria.conditions.exact.entries()) {
-			const match = this.conditionsV2[value] != null
-			if (!match) return false
-		}
+		for (const [key, value] of criteria.conditions.exact.entries()) {
+			if (value === `${key}_any`) continue // any = we don't care about this
 
-		const planetTypeMatch = criteria.planetTypes.has(this.type)
-		if (!planetTypeMatch) return false
+			const wantNone = value === `${key}_none`
+			if (wantNone) {
+				const match = this.conditionsV2[key] == null
+				if (!match) return false
+			} else {
+				const match = this.conditionsV2[key] != null
+				if (!match) return false
+			}
+		}
 
 		return true
 		const needs = criteria.structures
-		return (
-			!(
-				(needs.techmining && !this.conditions.techmining) ||
-				(needs.farmingaquaculture && !(this.conditions.farming || this.conditions.aquaculture)) ||
-				(needs.mining && !this.conditions.mining) ||
-				(needs.population?.coronalPortal &&
-					((spoilerLevel === 0 && this.coronalTapDiscovered === false) ||
-						(spoilerLevel > 0 && this.coronalTap === false))) ||
-				((needs.spaceport?.fullereneSpool || needs.megaport?.fullereneSpool) &&
-					!this.possibleArtifacts.fullereneSpool) ||
-				(needs.farmingaquaculture?.soilNanites && !this.possibleArtifacts.soilNanites) ||
-				(needs.mining?.mantleBore && !this.possibleArtifacts.mantleBore) ||
-				(needs.mining?.plasmaDynamo && !this.possibleArtifacts.plasmaDynamo) ||
-				(needs.refining?.catalyticCore && !this.possibleArtifacts.catalyticCore) ||
-				(needs.lightindustry?.biofactoryEmbryo && !this.possibleArtifacts.biofactoryEmbryo) ||
-				(needs.fuelprod?.synchrotron && !this.possibleArtifacts.synchrotron) ||
-				(!this.possibleArtifacts.cryoarithmeticEngine &&
-					(needs.patrolhq?.cryoarithmeticEngine ||
-						needs.militarybase?.cryoarithmeticEngine ||
-						needs.highcommand?.cryoarithmeticEngine)) ||
-				(needs.cryorevival &&
-					((spoilerLevel === 0 && this.cryosleeperDiscovered === false) ||
-						(spoilerLevel > 0 && this.cryosleeper === false))) ||
-				(criteria.market.domainRelay &&
-					((spoilerLevel === 0 && !this.domainRelayDiscovered) ||
-						(spoilerLevel > 0 && !this.domainRelay))) ||
-				(criteria.market.gate &&
-					((spoilerLevel === 0 && !this.gateDiscovered) || (spoilerLevel > 0 && !this.gate))) ||
-				(criteria.market.solar_array && !this.keywords.includes("solar_array"))
-			)
+		return !(
+			(needs.techmining && !this.conditions.techmining) ||
+			(needs.farmingaquaculture && !(this.conditions.farming || this.conditions.aquaculture)) ||
+			(needs.mining && !this.conditions.mining) ||
+			(needs.population?.coronalPortal &&
+				((spoilerLevel === 0 && this.coronalTapDiscovered === false) ||
+					(spoilerLevel > 0 && this.coronalTap === false))) ||
+			((needs.spaceport?.fullereneSpool || needs.megaport?.fullereneSpool) &&
+				!this.possibleArtifacts.fullereneSpool) ||
+			(needs.farmingaquaculture?.soilNanites && !this.possibleArtifacts.soilNanites) ||
+			(needs.mining?.mantleBore && !this.possibleArtifacts.mantleBore) ||
+			(needs.mining?.plasmaDynamo && !this.possibleArtifacts.plasmaDynamo) ||
+			(needs.refining?.catalyticCore && !this.possibleArtifacts.catalyticCore) ||
+			(needs.lightindustry?.biofactoryEmbryo && !this.possibleArtifacts.biofactoryEmbryo) ||
+			(needs.fuelprod?.synchrotron && !this.possibleArtifacts.synchrotron) ||
+			(!this.possibleArtifacts.cryoarithmeticEngine &&
+				(needs.patrolhq?.cryoarithmeticEngine ||
+					needs.militarybase?.cryoarithmeticEngine ||
+					needs.highcommand?.cryoarithmeticEngine)) ||
+			(needs.cryorevival &&
+				((spoilerLevel === 0 && this.cryosleeperDiscovered === false) ||
+					(spoilerLevel > 0 && this.cryosleeper === false))) ||
+			(criteria.market.domainRelay &&
+				((spoilerLevel === 0 && !this.domainRelayDiscovered) || (spoilerLevel > 0 && !this.domainRelay))) ||
+			(criteria.market.gate &&
+				((spoilerLevel === 0 && !this.gateDiscovered) || (spoilerLevel > 0 && !this.gate))) ||
+			(criteria.market.solar_array && !this.keywords.includes("solar_array"))
 		)
 	}
 
@@ -366,12 +380,7 @@ export class Body {
 				continue
 			}
 
-			const struct_prod = INDUSTRIES[structure].products(
-				this,
-				stats,
-				config,
-				criteria.market.industrial_planning,
-			)
+			const struct_prod = INDUSTRIES[structure].products(this, stats, config, criteria.market.industrial_planning)
 			for (const commodity in struct_prod) {
 				const produced = struct_prod[commodity]
 				if (produced > (stats.products[commodity] ?? 0)) {

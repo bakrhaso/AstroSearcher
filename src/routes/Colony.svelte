@@ -55,7 +55,8 @@
 	const conditionOptionsGrouped = Object.entries(groupBy(conditionOptions, it => it.group))
 		.map(it => {
 			const none = { id: `${it[0]}_none`, group: it[0], displayName: `None` }
-			const any = { id: `${it[0]}_any`, group: it[0], displayName: `Any` }
+			// Taking suggestions for a good display name for the any-matcher
+			const any = { id: `${it[0]}_any`, group: it[0], displayName: `Any/None` }
 
 			updateConditions(any.group, any.id)
 
