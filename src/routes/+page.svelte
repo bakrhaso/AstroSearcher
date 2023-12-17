@@ -49,9 +49,9 @@
 <section>
 	<p>
 		Inspired by the original
-		<a class="text-blue-300 underline" href="https://gomtuu.org/starsearcher/">Starsearcher/Persean Commercial Realty Group</a>
+		<a class="text-blue-300 visited:text-purple-300 underline" href="https://gomtuu.org/starsearcher/">Starsearcher/Persean Commercial Realty Group</a>
 		by gomtuu and the
-		<a class="text-blue-300 underline" href="https://github.com/sycspysycspy/Starsearcher-Modded-By-SYCSPY">modded
+		<a class="text-blue-300 visited:text-purple-300 underline" href="https://github.com/sycspysycspy/Starsearcher-Modded-By-SYCSPY">modded
 			version</a>
 		by SYCSPY.
 	</p>
