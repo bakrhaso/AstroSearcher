@@ -45,3 +45,20 @@
 		<Button type="submit">Search</Button>
 	</form>
 </section>
+
+<section>
+	<p>
+		Inspired by the original
+		<a class="text-blue-300 underline" href="https://gomtuu.org/starsearcher/">Starsearcher/Persean Commercial Realty Group</a>
+		by gomtuu and the
+		<a class="text-blue-300 underline" href="https://github.com/sycspysycspy/Starsearcher-Modded-By-SYCSPY">modded
+			version</a>
+		by SYCSPY.
+	</p>
+	<p>
+		The name AstroSearcher is an homage to Starsearcher.
+	</p>
+	<p>
+		Some parts of the code have been copied while prototyping.
+	</p>
+</section>

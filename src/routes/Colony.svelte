@@ -67,8 +67,8 @@
 
 <div>
 	<Accordion multiple>
-		<!--		defaultClass was copy-pasted from https://flowbite-svelte.com/docs/components/accordion#AccordionItem_styling -->
-		<!--		but I removed rounded corners -->
+		<!-- defaultClass was copy-pasted from https://flowbite-svelte.com/docs/components/accordion#AccordionItem_styling -->
+		<!-- but I removed rounded corners -->
 		<AccordionItem open class="p-2 ps-5 pe-5"
 					   defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700 p-2">
 			<span slot="header">Planet types</span>
