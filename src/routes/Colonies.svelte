@@ -13,7 +13,7 @@
 <div id="colonies">
 	{#each { length: colonies } as _, index}
 		<div class="colony-wrapper">
-			<p class="mb-1 text-xl font-medium text-white">Colony {index + 1}</p>
+			<h2 class="mb-1 text-xl font-medium text-white">Colony {index + 1}</h2>
 			<Colony index={index} />
 		</div>
 	{/each}
