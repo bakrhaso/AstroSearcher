@@ -227,6 +227,7 @@ export class Body {
 				if (this.conditionGroups[key] == null) return false
 			}
 
+			// I've made an assumption that comparing by rank makes sense. For vanilla, it seems to.
 			const match = this.conditionGroups[key].rank >= cachedConds()[value].rank
 			if (!match) return false
 		}

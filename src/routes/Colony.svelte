@@ -90,20 +90,27 @@
 						<legend>{humanReadable(conditionOptionsGroup.group)}</legend>
 						<div class="ps-1 last:pb-1 flex gap-3">
 							<Radio bind:group={conditionOptionsGroup.selected}
-								   name={conditionOptionsGroup.group} value={conditionOptionsGroup.any.id}
-								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.any.id)}>
+								   name={`${index}-${conditionOptionsGroup.group}`}
+								   value={conditionOptionsGroup.any.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.any.id)}
+								   id={`${index}-${conditionOptionsGroup.any.id}`}>
 								{conditionOptionsGroup.any.displayName}
 							</Radio>
 							<Radio bind:group={conditionOptionsGroup.selected}
-								   name={conditionOptionsGroup.group} value={conditionOptionsGroup.none.id}
-								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.none.id)}>
+								   name={`${index}-${conditionOptionsGroup.group}`}
+								   value={conditionOptionsGroup.none.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOptionsGroup.none.id)}
+								   id={`${index}-${conditionOptionsGroup.none.id}`}>
 								{conditionOptionsGroup.none.displayName}
 							</Radio>
 						</div>
 						{#each conditionOptionsGroup.options as conditionOption}
-							<Radio bind:group={conditionOptionsGroup.selected} class="ps-1 last:pb-1"
-								   name={conditionOptionsGroup.group} value={conditionOption.id}
-								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOption.id)}>
+							<Radio bind:group={conditionOptionsGroup.selected}
+								   name={`${index}-${conditionOptionsGroup.group}`}
+								   value={conditionOption.id}
+								   on:change={_ => updateConditions(conditionOptionsGroup.group, conditionOption.id)}
+								   id={`${index}-${conditionOption.id}`}
+								   class="ps-1 last:pb-1">
 								{conditionOption.displayName}
 							</Radio>
 						{/each}

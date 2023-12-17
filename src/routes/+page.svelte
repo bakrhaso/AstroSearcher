@@ -30,7 +30,7 @@
 
 	<form autocomplete="off" on:submit|preventDefault={submit}>
 
-		<Label for="save-upload" class="text-base">Upload savefile</Label>
+		<Label for="save-upload" class="text-base">Upload savefile:</Label>
 		<Fileupload id="save-upload" class="mb-1" bind:files={saveFile} />
 		<Helper class="text-sm">Found in: starsector/saves/save_CHARACTER_NAME_123456789/campaign.xml</Helper>
 
