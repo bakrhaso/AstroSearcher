@@ -25,13 +25,14 @@
 	/**
 	 *
 	 * @param checked
-	 * @param {string[]} typeIds
+	 * @param planetOptionsGroup
 	 */
-	function updatePlanetType(checked, typeIds) {
+	function updatePlanetType(checked, planetOptionsGroup) {
+		planetOptionsGroup.checked = checked
 		if (checked === true) {
-			typeIds.forEach(it => colony.planetTypes.add(it))
+			planetOptionsGroup.planetOptions.forEach(it => colony.planetTypes.add(it.id))
 		} else {
-			typeIds.forEach(it => colony.planetTypes.delete(it))
+			planetOptionsGroup.planetOptions.forEach(it => colony.planetTypes.delete(it.id))
 		}
 	}
 
@@ -49,7 +50,10 @@
 	const planetOptions = getPlanetOptions()
 	const conditionOptions = getConditionOptions()
 
-	const planetOptionsGroupedByDisplayName = Object.entries(groupBy(planetOptions, it => it.displayName))
+	const planetOptionsGrouped = Object.entries(groupBy(planetOptions, it => it.displayName))
+		.map(it => {
+			return { displayName: it[0], planetOptions: it[1], checked: false }
+		})
 		.sort((a, b) => stringComparator(a[0], b[0])) // sort alphabetically
 
 	const conditionOptionsGrouped = Object.entries(groupBy(conditionOptions, it => it.group))
@@ -73,10 +77,11 @@
 					   defaultClass="flex items-center justify-between w-full font-medium text-left border-gray-200 dark:border-gray-700 p-2">
 			<span slot="header">Planet types</span>
 			<fieldset class="grid grid-cols-4">
-				{#each planetOptionsGroupedByDisplayName as [displayName, planetOptions]}
-					<Checkbox id={`${index}-${displayName}`}
-							  on:change={e => updatePlanetType(e.target.checked, planetOptions.map(it => it.id))}>
-						{displayName}
+				{#each planetOptionsGrouped as planetOptionsGroup}
+					<Checkbox id={`${index}-${planetOptionsGroup.displayName}`}
+							  bind:checked={planetOptionsGroup.checked}
+							  on:change={e => updatePlanetType(e.target.checked, planetOptionsGroup)}>
+						{planetOptionsGroup.displayName}
 					</Checkbox>
 				{/each}
 			</fieldset>
