@@ -212,7 +212,7 @@ export class Body {
 	 * @return {boolean}
 	 */
 	prefilterStructures(criteria, spoilerLevel = 0) {
-		const planetTypeMatch = criteria.planetTypes.has(this.type)
+		const planetTypeMatch = criteria.planetTypes.size > 0 ? criteria.planetTypes.has(this.type) : true
 		if (!planetTypeMatch) return false
 
 		// key = group (ruins), value = amount (ruins_widespread)
