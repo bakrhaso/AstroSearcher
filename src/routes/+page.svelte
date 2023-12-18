@@ -28,6 +28,23 @@
 <section>
 	<h1 class="mb-1.5 text-3xl font-medium text-white text-center">AstroSearcher</h1>
 
+	<ul class="list-disc list-outside mb-2">
+		TODO:
+		<li class="list-item">Do you want planets and other stuff you haven't discovered yet to affect the result?</li>
+		<li class="list-item">Industries (industries have requirements, but not 1-to-1 to resources, e.g. mining industry needs ore, rare ore, volatiles, or organics)</li>
+		<li class="list-item">Items to enhance industries, e.g. fullerene spool and AI cores</li>
+		<li class="list-item">Structures that have to be near the colony</li>
+		<li class="list-item">Toggles for gates and domain relays</li>
+		<li class="list-item">All colonies in the same system</li>
+		<li class="list-item">Actually showing the systems</li>
+		<li class="list-item">Distance from the core (maybe distance to gate as well, since a gate can take you to the core?)</li>
+		<li class="list-item">Colony economy</li>
+		<li class="list-item">Map?</li>
+		<li class="list-item">Mods?</li>
+		<li class="list-item">Verify the colony follows game rules? Should probably still allow searching, but mark somehow so people playing modded can still use it</li>
+		<li class="list-item">Saving setups and sharing them</li>
+	</ul>
+
 	<form autocomplete="off" on:submit|preventDefault={submit}>
 
 		<Label for="save-upload" class="text-base">Upload savefile:</Label>
