@@ -56,10 +56,12 @@
 		<Helper class="text-sm">Found in: starsector/saves/save_CHARACTER_NAME_123456789/campaign.xml</Helper>
 
 		{#await saveFilePromise}
-			<p>Parsing save file...</p>
+			<h2 class="text-center text-2xl pt-3">Parsing save file...</h2>
 		{:then _res}
 			{#if character}
 				<h2 class="text-center text-2xl pt-3">Hello, {character.honorific} {character.name}!</h2>
+			{:else}
+				<h2 class="text-center text-2xl pt-3 invisible">If this is visible, something probably went wrong.</h2>
 			{/if}
 		{/await}
 		<Colonies />
