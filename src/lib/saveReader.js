@@ -285,9 +285,9 @@ function getBodies() {
 			continue
 		}
 
-		const bodyObj = new Body(system, name, type, surveyLevel, conditions, tags, ruinExplored, coreTechMiningMult)
-
 		const bodyId = z(body)
+		const bodyObj = new Body(bodyId, system, name, type, surveyLevel, conditions, tags, ruinExplored, coreTechMiningMult)
+
 		const radius = Number(getNamedChild(body, "radius").textContent)
 
 		if (!tags.includes("star") && !system.tags.includes("theme_core_populated")) {

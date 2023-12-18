@@ -11,8 +11,12 @@
 	let saveFile
 	let saveFilePromise
 
+	const globalSettings = {
+		coloniesDistanceApart: 0,
+	}
+
 	function submit() {
-		search($colonyFilterStore)
+		search(globalSettings, $colonyFilterStore)
 	}
 
 	$: if (saveFile) {

@@ -9,6 +9,7 @@ import { cachedConds } from "$lib/criteriaOptions.js"
 
 export class Body {
 	/**
+	 * @param {string} id
 	 * @param {System} system
 	 * @param {string} name
 	 * @param {string} type
@@ -18,7 +19,8 @@ export class Body {
 	 * @param {"none" | "false" | "true"} ruinExplored
 	 * @param {number} coreTechMiningMult
 	 */
-	constructor(system, name, type, surveyLevel, keywords, tags, ruinExplored, coreTechMiningMult) {
+	constructor(id, system, name, type, surveyLevel, keywords, tags, ruinExplored, coreTechMiningMult) {
+		this.id = id
 		this.system = system
 		this.name = name
 		this.type = type
