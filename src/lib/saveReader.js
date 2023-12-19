@@ -33,11 +33,13 @@ let xml
  * @param {File} saveFile
  */
 export async function readSaveFile(saveFile) {
+	// TODO I suspect this makes the UI hang, either this or parsing the XML further down
 	const saveFileText = await saveFile.text()
 
 	const start = performance.now()
 
 	const parser = new DOMParser()
+	// parsing takes 800ms
 	xml = parser.parseFromString(saveFileText, "text/xml")
 
 	coords = {}
@@ -56,7 +58,7 @@ export async function readSaveFile(saveFile) {
 	getRelations()
 	getMarkets()
 	getMCons()
-	getCOMkts()
+	getCOMkts() // TODO getCOMkts is about 500ms, seems like the only spot to save meaningful amount of time
 	getSystems()
 	getBodyCoords()
 	getBodies()
@@ -82,30 +84,35 @@ function getRelations() {
 
 	for (const factionA of nodes) {
 		const relation = factionA.parentNode
-		const value = Number(relation.getElementsByTagName("value")[0].textContent)
 
 		const factionAId = factionA.textContent
-		const factionBId = relation.getElementsByTagName("factionIdTwo")[0].textContent
 
 		if (relations[factionAId] == null) {
 			relations[factionAId] = {}
 		}
+
+		const value = Number(relation.getElementsByTagName("value")[0].textContent)
+		const factionBId = relation.getElementsByTagName("factionIdTwo")[0].textContent
+
 		relations[factionAId][factionBId] = value
 
 		if (relations[factionBId] == null) {
 			relations[factionBId] = {}
 		}
+
 		relations[factionBId][factionAId] = value
 	}
 }
 
 function getMarkets() {
 	const nodes = xml.querySelectorAll(':is(market, Market, [cl="Market"], [cl="PCMarket"])[z]')
+	// :has is too new to use yet, but on my test save it cuts the amount of nodes down to 1/3rd
+	// xml.querySelectorAll(':is(market, Market, [cl="Market"], [cl="PCMarket"])[z]:has(isPlanetConditionMarketOnly)')
 
 	for (const marketNode of nodes) {
 		const pcmoTag = getNamedChild(marketNode, "isPlanetConditionMarketOnly")
 		const econGroup = getNamedChild(marketNode, "econGroup")
-		const realMarket = pcmoTag && pcmoTag.textContent === "false" && !econGroup
+		const realMarket = pcmoTag?.textContent === "false" && !econGroup
 
 		if (!realMarket) {
 			continue
@@ -114,7 +121,7 @@ function getMarkets() {
 		const size = Number(getNamedChild(marketNode, "size").textContent)
 		const faction = getNamedChild(marketNode, "factionId")?.textContent
 
-		if (faction === "player" || size <= 0) {
+		if (size <= 0 || faction === "player") {
 			continue
 		}
 
@@ -126,13 +133,11 @@ function getMarkets() {
 			factionWeights[faction] = (factionWeights[faction] ?? 0) + Math.max(1, size - 2)
 		}
 
-		const loc = getNamedChild(marketNode, "location")
-			.textContent.split("|")
-			.map(part => Number(part))
+		const loc = getNamedChild(marketNode, "location").textContent.split("|")
 		const marketId = z(marketNode)
 
 		markets[marketId] = {
-			location: { x: loc[0], y: loc[1] },
+			location: { x: Number(loc[0]), y: Number(loc[1]) },
 			size,
 			faction,
 		}
@@ -152,7 +157,7 @@ function getCOMkts() {
 
 	for (const comkt of nodes) {
 		const market = comkt.parentElement.parentElement
-		const participates = !getNamedChild(market, "econGroup")
+		const participates = getNamedChild(market, "econGroup") == null
 
 		if (!participates) {
 			continue
@@ -181,21 +186,30 @@ function getSystems() {
 	const nodes = xml.querySelectorAll(':is(Sstm, [cl="Sstm"])[z]')
 
 	for (const systemNode of nodes) {
-		if (systemNode == null || getCoord(systemNode) == null) {
+		if (getCoord(systemNode) == null) {
 			continue
 		}
 
-		const name = systemNode.getAttribute("bN")
-		const coord = getCoord(systemNode).textContent.split("|")
 		const tagsElement = getNamedChild(systemNode, "tags")
 		const tags = []
+		let hasCoronalTap = false
+		let hasCryosleeper = false
 
 		// TODO in the original this code didn't work, the if checked if `children` was null instead of `tagsElement.children`
 		if (tagsElement?.children != null) {
 			for (const st of tagsElement.children) {
-				tags.push(st.textContent)
+				const tag = st.textContent
+
+				// idk if this is actually faster than doing e.g. `tags.includes("has_coronal_tap")`
+				hasCoronalTap = tag === "has_coronal_tap" || hasCoronalTap
+				hasCryosleeper = tag === "theme_derelict_cryosleeper" || hasCryosleeper
+
+				tags.push(tag)
 			}
 		}
+
+		const name = systemNode.getAttribute("bN")
+		const coord = getCoord(systemNode).textContent.split("|")
 
 		const system = {
 			name,
@@ -206,16 +220,16 @@ function getSystems() {
 			stars: [],
 		}
 
-		if (tags.includes("has_coronal_tap")) {
+		if (hasCoronalTap) {
 			const ccent = derefNode(systemNode.getElementsByTagName("tap")[0])
-			const discovered = ccent.getAttribute("di") !== "true"
+			const discovered = Boolean(ccent.getAttribute("di"))
 			system.coronalTap = true
 			system.coronalTapDiscovered = discovered
 		}
 
-		if (tags.includes("theme_derelict_cryosleeper")) {
+		if (hasCryosleeper) {
 			const ccent = systemNode.querySelector('[cl="CryosleeperEntityPlugin"]').parentElement
-			const discovered = ccent.getAttribute("di") !== "true"
+			const discovered = Boolean(ccent.getAttribute("di"))
 			system.cryosleeper = true
 			system.cryosleeperDiscovered = discovered
 		}
@@ -271,8 +285,16 @@ function getBodies() {
 		const tagsElement = getNamedChild(body, "tags")
 		const tags = []
 
+		let hasStar = false
+		let isCore = false
+
 		for (const st of tagsElement.children) {
-			tags.push(st.textContent)
+			const tag = st.textContent
+
+			hasStar = tag === "star" || hasStar
+			isCore = tag === "theme_core_populated" || isCore
+
+			tags.push(tag)
 		}
 
 		const name = JSON.parse(getNamedChild(body, "j0").textContent)["f0"]
@@ -286,14 +308,24 @@ function getBodies() {
 		}
 
 		const bodyId = z(body)
-		const bodyObj = new Body(bodyId, system, name, type, surveyLevel, conditions, tags, ruinExplored, coreTechMiningMult)
+		const bodyObj = new Body(
+			bodyId,
+			system,
+			name,
+			type,
+			surveyLevel,
+			conditions,
+			tags,
+			ruinExplored,
+			coreTechMiningMult,
+		)
 
 		const radius = Number(getNamedChild(body, "radius").textContent)
 
-		if (!tags.includes("star") && !system.tags.includes("theme_core_populated")) {
+		if (!hasStar && !isCore) {
 			bodies[bodyId] = bodyObj
 			system.bodies.push(bodyObj)
-		} else if (tags.includes("star")) {
+		} else if (hasStar) {
 			bodyObj.radius = radius
 
 			if (!type.startsWith("nebula_") && bodyCoords[bodyId] != null) {
@@ -311,6 +343,7 @@ function getBodies() {
 
 function getCommRelays() {
 	const nodes = xml.querySelectorAll(':is(CommRelayEP, [cl="CommRelayEP"])')
+
 	outerloop: for (const commRelay of nodes) {
 		const ccent = commRelay.parentElement
 		const systemNode = getNamedChild(ccent, "cL")
@@ -328,7 +361,7 @@ function getCommRelays() {
 			}
 		}
 
-		const discovered = ccent.hasAttribute("di") && ccent.getAttribute("di") === "true"
+		const discovered = Boolean(ccent.getAttribute("di"))
 		for (const body of system.bodies) {
 			body.domainRelay = true
 			body.domainRelayDiscovered = discovered
@@ -345,7 +378,7 @@ function getGates() {
 		const systemId = systemNode.getAttribute("ref") || systemNode.getAttribute("z")
 		const system = systems[systemId]
 
-		const discovered = gateNode.getAttribute("aI") === "true"
+		const discovered = Boolean(gateNode.getAttribute("aI"))
 
 		if (system?.bodies != null) {
 			for (const body of system.bodies) {
@@ -419,11 +452,13 @@ function getCoord(system) {
 }
 
 function getNamedChild(node, tagName) {
-	if (node instanceof Element) {
-		for (const child of node.children) {
-			if (child.tagName === tagName) {
-				return child
-			}
+	if (!(node instanceof Element)) {
+		return
+	}
+
+	for (const child of node.children) {
+		if (child.tagName === tagName) {
+			return child
 		}
 	}
 }
@@ -432,7 +467,7 @@ function derefNode(node) {
 	if (!node || node.hasAttribute("z")) {
 		return node
 	} else if (node.hasAttribute("ref")) {
-		return xml.querySelector('[z="' + ref(node) + '"]')
+		return xml.querySelector(`[z="${ref(node)}"]`)
 	}
 }
 
