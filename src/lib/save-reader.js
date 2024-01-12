@@ -1,4 +1,5 @@
-import { Body } from "$lib/Body.js"
+import { Body } from "$lib/body.js"
+// import { DOMParser } from "linkedom"
 
 export let character
 
@@ -9,6 +10,9 @@ export let coords
  */
 export let systems
 
+/**
+ * @type {Record<string, Body>}
+ */
 export let bodies
 
 export let bodyCoords
@@ -33,9 +37,23 @@ let xml
  * @param {File} saveFile
  */
 export async function readSaveFile(saveFile) {
-	// TODO I suspect this makes the UI hang, either this or parsing the XML further down
-	const saveFileText = await saveFile.text()
+	const SaveReaderWorker = await import("$lib/save-reader.worker.js?worker")
+	const readerWorker = new SaveReaderWorker.default()
+	readerWorker.postMessage(saveFile)
 
+	readerWorker.onmessage = function(event) {
+		if (event.error != null) {
+			console.error(event.error)
+		} else {
+			_readSaveFile(event.data.save)
+		}
+	}
+}
+
+/**
+ * @param {string} saveFileText
+ */
+async function _readSaveFile(saveFileText) {
 	const start = performance.now()
 
 	const parser = new DOMParser()
@@ -105,7 +123,7 @@ function getRelations() {
 }
 
 function getMarkets() {
-	const nodes = xml.querySelectorAll(':is(market, Market, [cl="Market"], [cl="PCMarket"])[z]')
+	const nodes = xml.querySelectorAll(":is(market, Market, [cl=\"Market\"], [cl=\"PCMarket\"])[z]")
 	// :has is too new to use yet, but on my test save it cuts the amount of nodes down to 1/3rd
 	// xml.querySelectorAll(':is(market, Market, [cl="Market"], [cl="PCMarket"])[z]:has(isPlanetConditionMarketOnly)')
 
@@ -145,7 +163,7 @@ function getMarkets() {
 }
 
 function getMCons() {
-	const nodes = xml.querySelectorAll(':is(MCon, [cl="MCon"])[z]')
+	const nodes = xml.querySelectorAll(":is(MCon, [cl=\"MCon\"])[z]")
 
 	for (const mcon of nodes) {
 		mcons[z(mcon)] = mcon
@@ -165,7 +183,7 @@ function getCOMkts() {
 
 		let accessMods = 0
 
-		const fBs = market.querySelectorAll(':scope > accessibilityMod > fBs:not([s="core_base"],[s="core_hostile"])')
+		const fBs = market.querySelectorAll(":scope > accessibilityMod > fBs:not([s=\"core_base\"],[s=\"core_hostile\"])")
 		for (const fB of fBs) {
 			accessMods += Number(fB.getAttribute("v"))
 		}
@@ -183,7 +201,7 @@ function getCOMkts() {
 }
 
 function getSystems() {
-	const nodes = xml.querySelectorAll(':is(Sstm, [cl="Sstm"])[z]')
+	const nodes = xml.querySelectorAll(":is(Sstm, [cl=\"Sstm\"])[z]")
 
 	for (const systemNode of nodes) {
 		if (getCoord(systemNode) == null) {
@@ -210,8 +228,10 @@ function getSystems() {
 
 		const name = systemNode.getAttribute("bN")
 		const coord = getCoord(systemNode).textContent.split("|")
+		const systemId = z(systemNode)
 
 		const system = {
+			id: systemId,
 			name,
 			x: Number(coord[0]),
 			y: Number(coord[1]),
@@ -228,7 +248,7 @@ function getSystems() {
 		}
 
 		if (hasCryosleeper) {
-			const ccent = systemNode.querySelector('[cl="CryosleeperEntityPlugin"]').parentElement
+			const ccent = systemNode.querySelector("[cl=\"CryosleeperEntityPlugin\"]").parentElement
 			const discovered = Boolean(ccent.getAttribute("di"))
 			system.cryosleeper = true
 			system.cryosleeperDiscovered = discovered
@@ -236,12 +256,12 @@ function getSystems() {
 
 		// TODO the todo below was here in the original, not sure what it means
 		// TODO: if (system_node.querySelector('CampaignTerrain[type="pulsar_beam"])) {}
-		systems[z(systemNode)] = system
+		systems[system.id] = system
 	}
 }
 
 function getBodyCoords() {
-	const nodes = xml.querySelectorAll('d[cl="Plnt"]')
+	const nodes = xml.querySelectorAll("d[cl=\"Plnt\"]")
 
 	for (const dNodes of nodes) {
 		const bodyId = ref(dNodes)
@@ -252,7 +272,7 @@ function getBodyCoords() {
 }
 
 function getBodies() {
-	const nodes = xml.querySelectorAll(':is(Plnt, [cl="Plnt"], [ty="NEBULA"] > star)[z]')
+	const nodes = xml.querySelectorAll(":is(Plnt, [cl=\"Plnt\"], [ty=\"NEBULA\"] > star)[z]")
 
 	for (const body of nodes) {
 		const system = getSystem(body)
@@ -342,7 +362,7 @@ function getBodies() {
 }
 
 function getCommRelays() {
-	const nodes = xml.querySelectorAll(':is(CommRelayEP, [cl="CommRelayEP"])')
+	const nodes = xml.querySelectorAll(":is(CommRelayEP, [cl=\"CommRelayEP\"])")
 
 	outerloop: for (const commRelay of nodes) {
 		const ccent = commRelay.parentElement
@@ -370,7 +390,7 @@ function getCommRelays() {
 }
 
 function getGates() {
-	const nodes = xml.querySelectorAll(':is(GateEntityPlugin, [cl="GateEntityPlugin"])')
+	const nodes = xml.querySelectorAll(":is(GateEntityPlugin, [cl=\"GateEntityPlugin\"])")
 	for (const gateNode of nodes) {
 		const ccent = gateNode.parentElement
 		const systemNode = getNamedChild(ccent, "cL")

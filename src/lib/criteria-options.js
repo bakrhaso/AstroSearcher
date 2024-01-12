@@ -1,8 +1,8 @@
 import { parse } from "csv-parse/browser/esm/sync"
 /** @type string */
-import planetGenData from "$lib/gameData/vanilla/planet_gen_data.csv?raw"
+import planetGenData from "$lib/game-data/vanilla/planet_gen_data.csv?raw"
 /** @type string */
-import conditionGenData from "$lib/gameData/vanilla/condition_gen_data.csv?raw"
+import conditionGenData from "$lib/game-data/vanilla/condition_gen_data.csv?raw"
 import { groupBy, humanReadable } from "$lib/utils.js"
 
 const BARREN_NAMES = ["barren", "barren2", "barren3", "barren_castiron", "barren_venuslike"]
@@ -47,7 +47,7 @@ export function getPlanetOptions() {
 }
 
 /**
- * The return variant with only id and group is here just for easier types in Colony.svelte
+ * The return variant with only id and group is here just for easier types in colony.svelte
  *
  * @return {{
  *     id: string,

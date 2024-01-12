@@ -1,8 +1,8 @@
 <script>
-	import Colonies from "./Colonies.svelte"
-	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
-	import { readSaveFile, character } from "$lib/saveReader.js"
-	import { search } from "$lib/Search.js"
+	import Colonies from "./colonies.svelte"
+	import { colonyFilterStore } from "$lib/colony-filter-store.js"
+	import { readSaveFile, character } from "$lib/save-reader.js"
+	import { search } from "$lib/search.js"
 	import { Button, Fileupload, Helper, Label } from "flowbite-svelte"
 
 	/**

@@ -1,11 +1,11 @@
-import { surveyLevelToNumber } from "$lib/gameUtils.js"
-import { CONDITION_EFFECTS } from "$lib/ConditionEffects.js"
-import { Stat } from "$lib/Stat.js"
+import { surveyLevelToNumber } from "$lib/game-utils.js"
+import { CONDITION_EFFECTS } from "$lib/condition-effects.js"
+import { Stat } from "$lib/stat.js"
 import { INDUSTRIES } from "$lib/Industries.js"
 import { nonneg } from "$lib/utils.js"
-import { COMMODITIES } from "$lib/Commodities.js"
-import { fleetQualityDoctrine, fleetSizeDoctrine } from "$lib/saveReader.js"
-import { cachedConds } from "$lib/criteriaOptions.js"
+import { COMMODITIES } from "$lib/commodities.js"
+import { fleetQualityDoctrine, fleetSizeDoctrine } from "$lib/save-reader.js"
+import { cachedConds } from "$lib/criteria-options.js"
 
 export class Body {
 	/**

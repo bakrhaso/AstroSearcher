@@ -1,4 +1,4 @@
-import { COMMODITIES } from "$lib/Commodities.js"
+import { COMMODITIES } from "$lib/commodities.js"
 import { nonneg } from "$lib/utils.js"
 
 export const INDUSTRIES = {

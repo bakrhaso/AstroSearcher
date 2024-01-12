@@ -1,5 +1,5 @@
 <script>
-	import Colony from "./Colony.svelte"
+	import Colony from "./colony.svelte"
 	import { Button } from "flowbite-svelte"
 	import { PlusSolid } from "flowbite-svelte-icons"
 

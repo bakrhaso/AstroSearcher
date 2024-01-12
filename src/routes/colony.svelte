@@ -1,7 +1,7 @@
 <script>
-	import { colonyFilterStore } from "$lib/colonyFilterStore.js"
+	import { colonyFilterStore } from "$lib/colony-filter-store.js"
 	import { groupBy, humanReadable, stringComparator } from "$lib/utils.js"
-	import { getConditionOptions, getPlanetOptions } from "$lib/criteriaOptions.js"
+	import { getConditionOptions, getPlanetOptions } from "$lib/criteria-options.js"
 	import { Accordion, AccordionItem, Checkbox, Radio } from "flowbite-svelte"
 
 	/**
