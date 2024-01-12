@@ -36,7 +36,6 @@
 	"type": "module",
 	"dependencies": {
 		"csv-parse": "^5.5.3",
-		"linkedom": "^0.16.6",
 		"ramda": "^0.29.1"
 	}
 }

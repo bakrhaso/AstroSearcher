@@ -1,5 +1,4 @@
 import { Body } from "$lib/body.js"
-// import { DOMParser } from "linkedom"
 
 export let character
 
@@ -33,10 +32,14 @@ export let fleetQualityDoctrine
 
 let xml
 
+let start
+
 /**
  * @param {File} saveFile
  */
 export async function readSaveFile(saveFile) {
+	start = performance.now()
+
 	const SaveReaderWorker = await import("$lib/save-reader.worker.js?worker")
 	const readerWorker = new SaveReaderWorker.default()
 	readerWorker.postMessage(saveFile)
@@ -53,9 +56,7 @@ export async function readSaveFile(saveFile) {
 /**
  * @param {string} saveFileText
  */
-async function _readSaveFile(saveFileText) {
-	const start = performance.now()
-
+function _readSaveFile(saveFileText) {
 	const parser = new DOMParser()
 	// parsing takes 800ms
 	xml = parser.parseFromString(saveFileText, "text/xml")
@@ -85,8 +86,7 @@ async function _readSaveFile(saveFileText) {
 	getFleetDoctrines()
 	getCharacter()
 
-	const end = performance.now()
-	console.log(`Loaded save in ${end - start} ms`)
+	console.log(`Loaded save in ${performance.now() - start} ms`)
 }
 
 function getCoords() {
